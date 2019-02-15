@@ -1,0 +1,34 @@
+
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+jobs:
+  build-and-test:
+    docker:
+      - image: circleci/node:10.15.0
+    working_directory: ~/demo
+    steps:
+      - checkout
+
+  deploy:
+    machine: true
+    production:
+    branch: master
+    steps:
+      - checkout
+      - run:
+          name: push file to server 
+          command: |
+            rsh  mvp@demo-app.rebloc.io "if [ ! -d 'webapp' ]; then mkdir -p webapp; fi"
+            scp -r ./webapp/* mvp@demo-app.rebloc.io:/home/mvp/webapp
+            rsh mvp@demo-app.rebloc.io "cd webapp/server && yarn install"
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+      - build-and-test
+      - deploy:
+          requires:
+            - build-and-test
