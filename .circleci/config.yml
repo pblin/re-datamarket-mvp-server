@@ -22,7 +22,7 @@ jobs:
           name: push file to server 
           command: |
             rsh  mvp@demo-app.rebloc.io "if [ ! -d 'webapp' ]; then mkdir -p webapp; fi"
-            scp -r ./webapp/* mvp@demo-app.rebloc.io:/home/mvp/webapp
+            scp -r ./* mvp@demo-app.rebloc.io:/home/mvp/webapp/server
             rsh mvp@demo-app.rebloc.io "cd webapp/server && yarn install"
 workflows:
   version: 2
