@@ -4,6 +4,8 @@ const cors = require("cors");
 import 'graphql-request';
 import { GraphQLClient } from 'graphql-request';
 import { APIKEY, GRAPHQL } from './config/ConfigEnv';
+import ProfileRouter from './routes/profile/profile.controller';
+
 const app = express();
 
 app.use(cors());
@@ -165,6 +167,9 @@ app.post('/schema', (req, res) => {
 app.get('/health', (req, res) => {
   res.sendStatus(200);
 });
+
+//Routes
+app.use('/profile', ProfileRouter);
 
 const PORT = 9000;
 

@@ -1,0 +1,24 @@
+import * as express from 'express';
+import {ProfileService} from "./profile.service";
+
+const router = express.Router();
+const profileService = new ProfileService();
+
+/* GET users listing. */
+router.get('/:email', (req, res, next) => {
+    return profileService.getProfile(req.params.email).then((profile) => {
+        if(!profile['marketplace_customer'].length) {
+            return res.status(404).send();
+        } else {
+            return res.status(200).send(profile['marketplace_customer'][0])
+        }
+    }).catch(() => {
+        return res.status(500).send(); //TODO: Introduce better error handling
+    })
+});
+
+router.post('/', (req, res) => {
+
+});
+
+export default router;
