@@ -18,7 +18,13 @@ router.get('/:email', (req, res, next) => {
 });
 
 router.post('/', (req, res) => {
+    return profileService.createProfile(req.body).then((profile) => {
+        res.status(200).send(profile['insert_marketplace_customer'].returning[0])
+    }).catch((err) => {
+       return res.status(500).send();
+    });
 
+    res.status(200).send();
 });
 
 export default router;
