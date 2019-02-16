@@ -28,11 +28,12 @@
     "graphql-tools": "^1.2.1",
     "mocha": "^3.5.0",
     "prettier": "^1.5.3",
-    "ts-node": "^3.3.0",
+    "ts-node": "^8.0.2",
     "typescript": "^2.4.2"
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
+    "start": "yarn run ts-node src/index.ts",
     "watch": "rm -rf dist && tsc && tsc -w",
     "serve": "NODE_DEBUG=net node --inspect dist/index.js",
     "test": "NODE_ENV=test mocha config/test-setup.js --require ts-node/register src/**/*.spec.ts",
