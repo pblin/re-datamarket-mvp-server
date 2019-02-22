@@ -23,7 +23,8 @@ jobs:
           command: |
             rsh  mvp@demo-app.rebloc.io "if [ ! -d 'webapp' ]; then mkdir -p webapp; fi"
             scp -r ./* mvp@demo-app.rebloc.io:/home/mvp/webapp/server
-            rsh mvp@demo-app.rebloc.io "cd webapp/server && yarn install"
+            rsh mvp@demo-app.rebloc.io "cd webapp/server && yarn install && nohup yarn run watch 2> nohup.out &"
+
 workflows:
   version: 2
   build-test-and-deploy:
