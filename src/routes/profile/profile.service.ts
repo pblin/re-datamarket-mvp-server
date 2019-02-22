@@ -24,7 +24,7 @@ export class ProfileService {
         }`;
 
         const variables = {
-            email
+             email
         };
 
         let result = await this.client.request (query, variables);
