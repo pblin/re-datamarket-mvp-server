@@ -166,14 +166,8 @@ export class SchemaService {
         let variables = {
             owner_id
         }
-        let data;
-        //get all datasets if owner_id is not given
-        if ( owner_id == -1 ) {
-            data = await this.client.request(query);
-        } else {
-            data = await this.client.request(query, variables);
-        }
-
+        let data = await this.client.request(query, variables);
+        
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
             return data ['marketplace_data_source_detail'];
         } else {
