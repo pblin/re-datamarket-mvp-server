@@ -34,7 +34,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc",
     "start": "yarn run ts-node src/index.ts",
-    "watch": "rm -rf dist && tsc && tsc -w",
+    "watch": "nodemon --exec ts-node -- src/index.ts",
     "serve": "NODE_DEBUG=net node --inspect dist/index.js",
     "test": "NODE_ENV=test mocha config/test-setup.js --require ts-node/register src/**/*.spec.ts",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
