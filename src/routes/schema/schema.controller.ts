@@ -34,9 +34,8 @@ router.post('/', (req, res) => {
           }
       }).catch ((err) => {res.status(500).send(err.messge); });
 });
-
 router.get('/:userid', (req, res, next) => {
-    console.log (req.params.userid);
+    // console.log (req.params.userid);
     return schemaService.getAllDatasetsOfUser(req.params.userid).then(datasets => {
       if( datasets < 0 ) {
           return res.status(404).send();
@@ -46,18 +45,6 @@ router.get('/:userid', (req, res, next) => {
   }).catch(() => {
       return res.status(500).send(); //TODO: Introduce better error handling
   })
-});
-
-router.get('/', (req, res, next) => {
-  return schemaService.getAllDatasetsOfUser(-1).then(datasets => {
-    if( datasets < 0 ) {
-        return res.status(404).send();
-    } else {
-        return res.status(200).send(datasets)
-    }
-}).catch(() => {
-    return res.status(500).send(); //TODO: Introduce better error handling
-})
 });
 
 export default router;
