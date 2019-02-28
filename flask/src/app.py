@@ -29,21 +29,24 @@ def config(filename='.database.ini', section='postgresql'):
 
     return db
 
+def put_quotes (s):
+    quote = "'"
+    return quote + s + quote
 
 def get_all_data_fields (conn,region,country):
     cursor = conn.cursor()
-    query = 'SELECT source_id,field_label,search_terms from marketplace.source_of_field order by source_id '
+    query = 'SELECT source_id,field_label,search_terms from marketplace.source_of_field '
 
     if region is not None or country is not None:
         query += "WHERE "
         if region is not None:
-            query += "region = " + region
+            query += "region = " + put_quotes(region)
 
             if country is not None:
-                query += " AND country = " + country
+                query += " AND country = " + put_quotes(country)
 
         else:
-            query += "country = " + country
+            query += "country = " + put_quotes(country)
 
     cursor.execute (query)
     rows = cursor.fetchall()
@@ -59,8 +62,8 @@ def get_all_hits (conn,hitList):
     itemStr = ""
     itemLen = len(hitList)
     for i in range (itemLen-1):
-        itemStr += "'" + hitList[i] + "',"
-    itemStr += "'" + hitList[itemLen-1] +"'"
+        itemStr += put_quotes(hitList[i]) + ","
+    itemStr += put_quotes ( hitList[itemLen-1])
     query += "(" + itemStr + ")"
 
     print (query)
