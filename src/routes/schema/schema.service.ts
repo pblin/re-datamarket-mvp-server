@@ -76,7 +76,7 @@ export class SchemaService {
         } else return -1; 
     }
   
-    async extractAndSaveDataFields (schemaItems:any, dsId:string) {
+    async extractAndSaveDataFields (schemaItems:any, dsId:string, search_terms:string, region:string, country:string) {
         const mut = `
             mutation insert_marketplace_source_of_field($objects:[marketplace_source_of_field_insert_input!]!)
             {
@@ -86,8 +86,12 @@ export class SchemaService {
                     constraint: source_of_field_pkey
                     update_columns: [ 
                         field_name
+                        field_label
                         description
                         field_type
+                        region
+                        country
+                        search_terms
                         source_id
                     ] 
             } ) {
@@ -102,8 +106,12 @@ export class SchemaService {
         for (var i = 0; i < schemaItems.length; i++) {
         const item = {
             field_name:schemaItems[i].name,
-            description:schemaItems[i].description,
+            description:schemaItems[i].description.toLowerCase(),
+            field_label:schemaItems[i].label.toLowerCase(),
             field_type:schemaItems[i].type,
+            region: region,
+            country: country,
+            search_germ:search_terms,
             source_id:dsId,
         };
         variables.objects.push(item);
@@ -138,16 +146,36 @@ export class SchemaService {
             return -1; 
         }
     }
+    async deleteSchema (asset_id: String) {
+
+        const mu = `mutation delete_schema ($asset_id: String ) {
+            delete_marketplace_data_source_detail (
+            where: {id: {_eq: $asset_id}}
+            ) {
+            affected_rows
+            }
+        }`
+        let variables = {
+            asset_id
+        }
+        let data = await this.client.request(mu, variables);
+
+        if ( data ['delete_marketplace_data_source_detail'] !== undefined ) {
+            return data ['delete_marketplace_data_source_detail'];
+        } else {
+            return -1; 
+        }
+    }
     async getAllDatasetsOfUser (owner_id: number) {
         const query =  `query datasets ($owner_id: Int ) {
             marketplace_data_source_detail 
                   (where:{dataset_owner_id:{ _eq: $owner_id}})
            {
-                 id,
+               id,
                name,
                description,
                delivery_method,
-                 access_url,
+               access_url,
                api_key,
                enc_data_key,
                num_of_records,

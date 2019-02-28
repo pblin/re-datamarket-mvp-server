@@ -24,8 +24,14 @@ router.post('/', (req, res) => {
         if (result < 0) {
           res.status(500).send();
         } else { 
-          return schemaService.extractAndSaveDataFields(schemaItems, req.body.id);
-        }
+          return schemaService.extractAndSaveDataFields(
+                              schemaItems, 
+                              req.body.id,
+                              req.body.search_terms,
+                              req.body.state_province,
+                              req.body.country
+                            );
+         }
         }).then ( (result) => {
           if (result < 0 ) {
             res.status(500).send();
@@ -46,5 +52,17 @@ router.get('/:userid', (req, res, next) => {
       return res.status(500).send(); //TODO: Introduce better error handling
   })
 });
+
+router.delete('/:assetid'), (req, res, netxt) => {
+    return schemaService.deleteSchema(req.params.assetid).then(result=> {
+      if( result  < 0 ) {
+          return res.status(404).send();
+      } else {
+          return res.status(200).send(result)
+      }
+  }).catch(() => {
+      return res.status(500).send(); //TODO: Introduce better error handling
+  })
+}
 
 export default router;
