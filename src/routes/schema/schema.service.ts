@@ -104,21 +104,27 @@ export class SchemaService {
         };
     
         for (var i = 0; i < schemaItems.length; i++) {
+            if (schemaItems[i].label === undefined) {
+                schemaItems[i].label = schemaItems[i].name.replace("_", " ").toLowerCase();
+            }
+            // console.log(schemaItems[i]);
         const item = {
             field_name:schemaItems[i].name,
             description:schemaItems[i].description.toLowerCase(),
-            field_label:schemaItems[i].label.toLowerCase(),
+            field_label:schemaItems[i].label,
             field_type:schemaItems[i].type,
             region: region,
             country: country,
-            search_germ:search_terms,
+            search_terms:search_terms,
             source_id:dsId,
         };
         variables.objects.push(item);
         }
-    
+        // console.log(mut);
+        // console.log(variables);
         let data = await this.client.request(mut, variables);
-        
+        console.log(data);
+
         if (data !== undefined ) {
             return data['insert_marketplace_source_of_field'].affected_rows;
         } else {
