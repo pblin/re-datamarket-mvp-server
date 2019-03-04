@@ -11,7 +11,7 @@ router.get('/', (req, res, next) => {
     if( datasets < 0 ) {
         return res.status(404).send("resource not found");
     } else {
-        return res.status(200).send(datasets)
+        return res.status(200).send(datasets);
     }
 }).catch(() => {
     return res.status(500).send("unknown server error"); //TODO: Introduce better error handling
@@ -23,7 +23,7 @@ router.get('/dataset/:assetid', (req, res, next) => {
       if( datasets < 0 ) {
           return res.status(404).send("resource not found");
       } else {
-          return res.status(200).send(JSON.stringify(datasets));
+          return res.status(200).send(datasets);
       }
   }).catch(() => {
       return res.status(500).send("unknown server error"); //TODO: Introduce better error handling
@@ -48,7 +48,7 @@ router.get('/search', (req, res, next) => {
         if (datasets < 0) {
             return res.status(404).send("resource not found");
         } else {
-            return res.status(200).send(JSON.stringify(datasets));
+            return res.status(200).send(datasets);
         }
     }).catch(() => {
         return res.status(500).send("unknown server error"); //TODO: Introduce better error handling

@@ -169,7 +169,7 @@ export class SchemaService {
         console.log(data);
 
         if ( data ['delete_marketplace_data_source_detail'] !== undefined ) {
-            return data ['delete_marketplace_data_source_detail'];
+            return data ['delete_marketplace_data_source_detail'].affected_rows;
         } else {
             return -1; 
         }
