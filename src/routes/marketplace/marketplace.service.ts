@@ -164,7 +164,7 @@ export class MarketplaceService {
         let data = await this.client.request(query, variables);
         
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
-            return data ['marketplace_data_source_detail'];
+            return data ['marketplace_data_source_detail'][0];
         } else {
             return -1; 
         }
