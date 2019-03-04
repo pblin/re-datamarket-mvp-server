@@ -152,19 +152,21 @@ export class SchemaService {
             return -1; 
         }
     }
-    async deleteSchema (asset_id: String) {
+    async deleteSchema (id: String) {
 
-        const mu = `mutation delete_schema ($asset_id: String ) {
+        const mu = `mutation delete_schema ($id: String ) {
             delete_marketplace_data_source_detail (
-            where: {id: {_eq: $asset_id}}
+            where: {id: {_eq: $id}}
             ) {
             affected_rows
             }
         }`
         let variables = {
-            asset_id
+            id
         }
+        console.log(variables);
         let data = await this.client.request(mu, variables);
+        console.log(data);
 
         if ( data ['delete_marketplace_data_source_detail'] !== undefined ) {
             return data ['delete_marketplace_data_source_detail'];

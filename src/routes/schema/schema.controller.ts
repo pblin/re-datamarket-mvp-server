@@ -66,29 +66,24 @@ router.get('/dataset/:assetid', (req, res, next) => {
 })
 });
 
-router.delete('/dataset/:assetid'), (req, res, netxt) => {
-     console.log (req.params.assetid);
-      return schemaService.deleteSchema(req.params.assetid).then(result=> {
+
+router.delete('/dataset/:assetid', (req, res, netxt) => {
+    console.log (req.params.assetid);
+    return schemaService.deleteSchema(req.params.assetid).then(result=> {
       if( result  < 0 ) {
           return res.status(404).send();
       } else {
-          return res.status(200).send(result)
+          return schemaService.deletePriorSavedFields(req.params.assetid);
       }
-    }).then ( (result) => {
-        if (result < 0) {
+  }).then ( (result) => {
+        if (result < 0 ) {
           res.status(500).send();
         } else {
-          return schemaService.deletePriorSavedFields(req.params.assetid);
+          res.status(200).send();
         }
-    }).then ( (result) => {
-          if (result < 0 ) {
-            res.status(500).send();
-          } else {
-            res.status(200).send();
-          }
-      }).catch(() => {
-      return res.status(500).send(); //TODO: Introduce better error handling
-  })
-}
+    }).catch(() => {
+    return res.status(500).send(); //TODO: Introduce better error handling
+  });
+});
 
 export default router;
