@@ -18,6 +18,17 @@ router.get('/', (req, res, next) => {
 });
 });
 
+router.get('/dataset/:assetid', (req, res, next) => {
+    return marketplaceService.getAdataset(req.params.assetid).then(datasets => {
+      if( datasets < 0 ) {
+          return res.status(404).send();
+      } else {
+          return res.status(200).send(datasets)
+      }
+  }).catch(() => {
+      return res.status(500).send(); //TODO: Introduce better error handling
+  });
+  });
 router.get('/search', (req, res, next) => {
     let country = '';
     let region = '';

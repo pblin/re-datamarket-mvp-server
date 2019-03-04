@@ -40,7 +40,7 @@ router.post('/', (req, res) => {
           }
       }).catch ((err) => {res.status(500).send(err.messge); });
 });
-router.get('/:userid', (req, res, next) => {
+router.get('/user/:userid', (req, res, next) => {
     // console.log (req.params.userid);
     return schemaService.getAllDatasetsOfUser(req.params.userid).then(datasets => {
       if( datasets < 0 ) {
@@ -53,14 +53,40 @@ router.get('/:userid', (req, res, next) => {
   })
 });
 
-router.delete('/:assetid'), (req, res, netxt) => {
-    return schemaService.deleteSchema(req.params.assetid).then(result=> {
+router.get('/dataset/:assetid', (req, res, next) => {
+  console.log (req.params.assetid);
+  return schemaService.getAdataset(req.params.assetid).then(datasets => {
+    if( datasets < 0 ) {
+        return res.status(404).send();
+    } else {
+        return res.status(200).send(datasets)
+    }
+}).catch(() => {
+    return res.status(500).send(); //TODO: Introduce better error handling
+})
+});
+
+router.delete('/dataset/:assetid'), (req, res, netxt) => {
+     console.log (req.params.assetid);
+      return schemaService.deleteSchema(req.params.assetid).then(result=> {
       if( result  < 0 ) {
           return res.status(404).send();
       } else {
           return res.status(200).send(result)
       }
-  }).catch(() => {
+    }).then ( (result) => {
+        if (result < 0) {
+          res.status(500).send();
+        } else {
+          return schemaService.deletePriorSavedFields(req.params.assetid);
+        }
+    }).then ( (result) => {
+          if (result < 0 ) {
+            res.status(500).send();
+          } else {
+            res.status(200).send();
+          }
+      }).catch(() => {
       return res.status(500).send(); //TODO: Introduce better error handling
   })
 }

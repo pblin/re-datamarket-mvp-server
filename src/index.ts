@@ -26,5 +26,5 @@ app.use('/marketplace', MarketplaceRouter);
 const PORT = 9000;
 
 app.listen(PORT, () => {
-  console.log(`Rebloc GraphQL server running on port ${PORT}.`);
+  console.log(`Rebloc API server running on port ${PORT}.`);
 });

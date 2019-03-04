@@ -106,7 +106,7 @@ export class MarketplaceService {
         marketplace_data_source_detail (
           where: { id: {_in: $objects} }
         ){
-              id,
+          id,
           name,
           description,
           delivery_method,
@@ -134,6 +134,39 @@ export class MarketplaceService {
       } else {
           return -1;
       }
-
+    }
+    async getAdataset (id: string) {
+        const query =  `query datasets ($id: String ) {
+            marketplace_data_source_detail 
+                  (where:{id:{ _eq: $id}})
+           {
+               id,
+               name,
+               description,
+               delivery_method,
+               access_url,
+               num_of_records,
+               search_terms,
+               parameters,
+               country,
+               state_province,
+               price_low,
+               price_high,
+               json_schema,
+               stage,
+               date_created,
+               date_modified
+           }
+         }`
+        let variables = {
+            id
+        }
+        let data = await this.client.request(query, variables);
+        
+        if ( data ['marketplace_data_source_detail'] !== undefined ) {
+            return data ['marketplace_data_source_detail'];
+        } else {
+            return -1; 
+        }
     }
 }
