@@ -210,7 +210,7 @@ export class SchemaService {
             return -1; 
         }
     }
-    async getAdataset (id: string) {
+    async getAdataset (id: string, userId:number) {
         const query =  `query datasets ($id: String ) {
             marketplace_data_source_detail 
                   (where:{id:{ _eq: $id}})
@@ -230,9 +230,9 @@ export class SchemaService {
                price_low,
                price_high,
                json_schema,
-               stage,
                date_created,
-               date_modified
+               date_modified,
+               dataset_owner_id
            }
          }`
         let variables = {
@@ -241,7 +241,17 @@ export class SchemaService {
         let data = await this.client.request(query, variables);
         
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
-            return data ['marketplace_data_source_detail'];
+            let datasetInfo = data ['marketplace_data_source_detail'][0];
+            // remove non-owner view info
+            console.log (userId);
+            if (userId != datasetInfo.dataset_owner_id) {
+                delete datasetInfo["api_key"];
+                delete datasetInfo["enc_data_key"];
+                // delete datasetInfo["dataset_owner_id"];
+                // console.log('delete elements');
+            }
+            // console.log(datasetInfo);
+            return datasetInfo;
         } else {
             return -1; 
         }
