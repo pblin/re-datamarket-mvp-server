@@ -152,22 +152,24 @@ export class SchemaService {
             return -1; 
         }
     }
-    async deleteSchema (asset_id: String) {
+    async deleteSchema (id: String) {
 
-        const mu = `mutation delete_schema ($asset_id: String ) {
+        const mu = `mutation delete_schema ($id: String ) {
             delete_marketplace_data_source_detail (
-            where: {id: {_eq: $asset_id}}
+            where: {id: {_eq: $id}}
             ) {
             affected_rows
             }
         }`
         let variables = {
-            asset_id
+            id
         }
+        console.log(variables);
         let data = await this.client.request(mu, variables);
+        console.log(data);
 
         if ( data ['delete_marketplace_data_source_detail'] !== undefined ) {
-            return data ['delete_marketplace_data_source_detail'];
+            return data ['delete_marketplace_data_source_detail'].affected_rows;
         } else {
             return -1; 
         }
@@ -204,6 +206,52 @@ export class SchemaService {
         
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
             return data ['marketplace_data_source_detail'];
+        } else {
+            return -1; 
+        }
+    }
+    async getAdataset (id: string, userId:number) {
+        const query =  `query datasets ($id: String ) {
+            marketplace_data_source_detail 
+                  (where:{id:{ _eq: $id}})
+           {
+               id,
+               name,
+               description,
+               delivery_method,
+               access_url,
+               api_key,
+               enc_data_key,
+               num_of_records,
+               search_terms,
+               parameters,
+               country,
+               state_province,
+               price_low,
+               price_high,
+               json_schema,
+               date_created,
+               date_modified,
+               dataset_owner_id
+           }
+         }`
+        let variables = {
+            id
+        }
+        let data = await this.client.request(query, variables);
+        
+        if ( data ['marketplace_data_source_detail'] !== undefined ) {
+            let datasetInfo = data ['marketplace_data_source_detail'][0];
+            // remove non-owner view info
+            console.log (userId);
+            if (userId != datasetInfo.dataset_owner_id) {
+                delete datasetInfo["api_key"];
+                delete datasetInfo["enc_data_key"];
+                // delete datasetInfo["dataset_owner_id"];
+                // console.log('delete elements');
+            }
+            // console.log(datasetInfo);
+            return datasetInfo;
         } else {
             return -1; 
         }

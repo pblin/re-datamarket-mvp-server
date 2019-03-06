@@ -9,10 +9,13 @@ import SchemaRouter  from './routes/schema/schema.controller';
 import MarketplaceRouter from './routes/marketplace/marketplace.controller';
 
 const app = express();
+const methodOverride = require('method-override');
 
+app.use(function(req,res,next){console.log(req.method,req.url); next();});
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(methodOverride('_method'));
 
 app.get('/health', (req, res) => {
   res.sendStatus(200);
@@ -26,5 +29,5 @@ app.use('/marketplace', MarketplaceRouter);
 const PORT = 9000;
 
 app.listen(PORT, () => {
-  console.log(`Rebloc GraphQL server running on port ${PORT}.`);
+  console.log(`Rebloc API server running on port ${PORT}.`);
 });
