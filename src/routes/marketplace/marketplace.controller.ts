@@ -34,13 +34,13 @@ router.get('/search', (req, res, next) => {
     let region = '';
     let terms = '';
     if (req.query.country !== undefined) {
-        country = req.query.country;
+        country = req.query.country.toLowerCase();
     }
     if (req.query.region !== undefined) {
-        region = req.query.region;
+        region = req.query.region.toLowerCase();
     }
     if (req.query.terms !== undefined) {
-        terms = req.query.terms;
+        terms = req.query.terms.toLowerCaes();
     } else {
         return res.status(404).send("no search terms")
     }
