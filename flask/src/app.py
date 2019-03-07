@@ -14,50 +14,60 @@ import json
 import csv
 import binascii
 import hashlib
+import os, random, struct
 
 
 app = Flask(__name__)
 
-# AES supports multiple key sizes: 16 (AES128), 24 (AES192), or 32 (AES256).
-key_bytes = 32
+def encrypt_file(key, in_filename, out_filename=None, chunksize=64*1024):
 
-# Takes as input a 32-byte key and an arbitrary-length plaintext and returns a
-# pair (iv, ciphtertext). "iv" stands for initialization vector.
-def encrypt(key, plaintext):
-    assert len(key) == key_bytes
+    if not out_filename:
+        out_filename = in_filename + '.enc'
 
-    # Choose a random, 16-byte IV.
-    iv = Random.new().read(AES.block_size)
+    # iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
+    iv = os.urandom(16)
+    # print ("iv = %s, size = %d" % (str(iv) ,len(iv)))
+    encryptor = AES.new(key, AES.MODE_CBC, iv)
+    filesize = os.path.getsize(in_filename)
 
-    # Convert the IV to a Python integer.
-    iv_int = int(binascii.hexlify(iv), 16)
+    with open(in_filename, 'rb') as infile:
+        with open(out_filename, 'wb') as outfile:
+            outfile.write(struct.pack('<Q', filesize))
+            outfile.write(iv)
 
-    # Create a new Counter object with IV = iv_int.
-    ctr = Counter.new(AES.block_size * 8, initial_value=iv_int)
+            while True:
+                chunk = infile.read(chunksize)
+                if len(chunk) == 0:
+                    break
+                elif len(chunk) % 16 != 0:
+                    chunk += ' '.encode() * (16 - len(chunk) % 16)
 
-    # Create AES-CTR cipher.
-    aes = AES.new(key, AES.MODE_CTR, counter=ctr)
+                outfile.write(encryptor.encrypt(chunk))
 
-    # Encrypt and return IV and ciphertext.
-    ciphertext = aes.encrypt(plaintext)
-    return (iv, ciphertext)
+def decrypt_file(key, in_filename, out_filename=None, chunksize=24*1024):
+    """ Decrypts a file using AES (CBC mode) with the
+        given key. Parameters are similar to encrypt_file,
+        with one difference: out_filename, if not supplied
+        will be in_filename without its last extension
+        (i.e. if in_filename is 'aaa.zip.enc' then
+        out_filename will be 'aaa.zip')
+    """
+    if not out_filename:
+        out_filename = os.path.splitext(in_filename)[0]
 
-# Takes as input a 32-byte key, a 16-byte IV, and a ciphertext, and outputs the
-# corresponding plaintext.
-def decrypt(key, iv, ciphertext):
-    assert len(key) == key_bytes
+    with open(in_filename, 'rb') as infile:
+        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+        iv = infile.read(16)
+        decryptor = AES.new(key, AES.MODE_CBC, iv)
 
-    # Initialize counter for decryption. iv should be the same as the output of
-    # encrypt().
-    iv_int = int(iv.encode('hex'), 16)
-    ctr = Counter.new(AES.block_size * 8, initial_value=iv_int)
+        with open(out_filename, 'wb') as outfile:
+            while True:
+                chunk = infile.read(chunksize)
+                if len(chunk) == 0:
+                    break
+                outfile.write(decryptor.decrypt(chunk))
 
-    # Create AES-CTR cipher.
-    aes = AES.new(key, AES.MODE_CTR, counter=ctr)
-
-    # Decrypt and return the plaintext.
-    plaintext = aes.decrypt(ciphertext)
-    return plaintext
+            outfile.truncate(origsize)
 
 
 def config(filename='.database.ini', section='postgresql'):
@@ -68,15 +78,15 @@ def config(filename='.database.ini', section='postgresql'):
     parser.read(filename)
 
     # get section, default to postgresql
-    db = {}
+    info = {}
     if parser.has_section(section):
         params = parser.items(section)
         for param in params:
-            db[param[0]] = param[1]
+            info [param[0]] = param[1]
     else:
         raise Exception('Section {0} not found in the {1} file'.format(section, filename))
 
-    return db
+    return info
 
 def put_quotes (s):
     quote = "'"
@@ -113,6 +123,7 @@ def get_all_hits (conn,hitList):
     query = sql.SQL (selectQuery).format(sql.SQL(', ').join(sql.Placeholder()*len(hitList)))
 
     print (hitList);
+
     # print (query.as_string(conn))
     # make return result in dictionary
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -200,33 +211,28 @@ def deliver_sample_data (conn,table,id,limit,output):
     cursor.execute(limitQuery)
     rows = cursor.fetchall()
 
-    #encrypting all values
-    results = [{}]
-    for row in rows:
-        encryptedObj = {}
-        for k, v in row.items():
-            encryptedObj[k] =  encrypt(cypherKey,str(v).encode('utf-8'))
-        results.append(encryptedObj)
 
-    # print (results)
-    jsonString = json.dumps(results, indent=4, sort_keys=False, default=str)
+    jsonString = json.dumps(rows, indent=4, sort_keys=False, default=str)
 
-    outFileName = "/tmp/%s.%s" % (id, output)
-    print (outFileName)
-    outFile = open(outFileName, "w")
+    resultFileName = "/tmp/%s.%s" % (id, output)
+
+    outFile = open(resultFileName, "w")
     if output == "json":
         outFile.write (jsonString)
     else:
         csvWriter = csv.DictWriter(outFile,fieldnames=cols)
         csvWriter.writeheader()
-        for row in results:
+        for row in rows:
             csvWriter.writerow (row)
 
     outFile.close()
+    encFileName = resultFileName + '.enc'
+    encrypt_file(cypherKey,resultFileName,encFileName)
 
     #put the file out to ipfs throug Infura service
-    api = ipfsApi.Client('https://ipfs.infura.io', 5001)
-    res = api.add(outFileName)
+    serverConfig = config(section='ipfs')
+    api = ipfsApi.Client(serverConfig['endpoint'], serverConfig['port'])
+    res = api.add(encFileName)
 
     #return ipfs Hash
     return res[0]['Hash']

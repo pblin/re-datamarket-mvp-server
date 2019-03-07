@@ -7,7 +7,6 @@ export class SchemaService {
     constructor() {
         this.client = Db.getInstance().client;
     }
-
     async saveDataset (ds:any) {
         const mut = `
         mutation upsert_marketplace_data_source_detail 
@@ -95,7 +94,7 @@ export class SchemaService {
                         source_id
                     ] 
             } ) {
-                affected_rows
+                    affected_rows
                 }
             }`;
     
@@ -120,8 +119,7 @@ export class SchemaService {
         };
         variables.objects.push(item);
         }
-        // console.log(mut);
-        // console.log(variables);
+   
         let data = await this.client.request(mut, variables);
         console.log(data);
 
@@ -244,11 +242,11 @@ export class SchemaService {
             let datasetInfo = data ['marketplace_data_source_detail'][0];
             // remove non-owner view info
             console.log (userId);
-            if (userId != datasetInfo.dataset_owner_id) {
+            // userID == 0 is the special case for returning dataset right after saved
+            if (userId != 0 && userId != datasetInfo.dataset_owner_id) {
                 delete datasetInfo["api_key"];
                 delete datasetInfo["enc_data_key"];
-                // delete datasetInfo["dataset_owner_id"];
-                // console.log('delete elements');
+                //delete datasetInfo["dataset_owner_id"];
             }
             // console.log(datasetInfo);
             return datasetInfo;
