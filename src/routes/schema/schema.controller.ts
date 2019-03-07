@@ -5,8 +5,9 @@ const router = express.Router();
 
 const schemaService= new SchemaService();
 router.post('/', (req, res) => {
-
+      let returnSavedItem = null;
       let schemaItems = null;
+      // console.log(req.body);
       try  {
         schemaItems = JSON.parse(req.body.json_schema);
       }
@@ -18,11 +19,13 @@ router.post('/', (req, res) => {
         if (result < 0) {
           res.status(500).send("grahQL error");
         } else {
-          return schemaService.deletePriorSavedFields(req.body.id);
+          returnSavedItem = schemaService.deletePriorSavedFields(req.body.id);
+          console.log(returnSavedItem)
+          return returnSavedItem;
         }
       }).then ((result) => { 
         if (result < 0) {
-          res.status(500).send();
+            res.status(500).send("DB operations error.");
         } else { 
           return schemaService.extractAndSaveDataFields(
                               schemaItems, 
@@ -33,10 +36,17 @@ router.post('/', (req, res) => {
                             );
          }
         }).then ( (result) => {
+          if (result < 0 ){
+            res.status(500).send("graphQL error");
+          } else {
+             return schemaService.getAdataset(req.body.id, 0);
+          }
+        }).then ( (result) => {
           if (result < 0 ) {
             res.status(500).send("graphQL error");
           } else {
-            res.status(200).send("dataset saved");
+            // console.log(result);
+            res.status(200).send(result);
           }
       }).catch ((err) => {res.status(500).send(err.messge); });
 });
@@ -49,13 +59,14 @@ router.get('/user/:userid', (req, res, next) => {
           return res.status(200).send(datasets)
       }
   }).catch(() => {
-      return res.status(500).send("unknown server error."); //TODO: Introduce better error handling
+      //TODO: Introduce better error handling
+      return res.status(500).send("unknown server error."); 
   })
 });
 
 router.get('/dataset/:assetid', (req, res, next) => {
   console.log (req.params.assetid);
-  let userId=-1;
+  let userId=-100; //default value
 
   if (req.query.userid !== undefined) {
     userId=req.query.userid;
