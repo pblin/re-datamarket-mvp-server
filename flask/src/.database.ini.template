@@ -1,7 +1,11 @@
 [postgresql]
-user=reblocadmin@rebloc-sql
-password=Rebl0cWe1c0me
-host=rebloc-sql.postgres.database.azure.com
+user="dbusername"
+password="dbpassword"
+host=hosturl
 port=5432
-database=rebloc_data
-sslrootcert=/Users/bernardlin/Downloads/root.crt
+database=dbname
+sslrootcert=/path/to/root.crt
+
+[ipfs]
+endpoint="url of ipfs node"
+port=5001
