@@ -1,6 +1,7 @@
 import os, random, struct
 from Crypto.Cipher import AES
 import hashlib
+import sys
 
 def encrypt_file(key, in_filename, out_filename=None, chunksize=64*1024):
 
@@ -54,8 +55,14 @@ def decrypt_file(key, in_filename, out_filename=None, chunksize=24*1024):
             outfile.truncate(origsize)
 
 
-# key = '9f86d081884c7d659a2feaa0c55ad015'
-key = hashlib.sha256('test'.encode('utf-8')).hexdigest()[:32]
-# encrypt_file(key, "/tmp/f92f25b0-3a1d-11e9-a778-1f41c54b70ff.json")
-decrypt_file(key, "/Users/bernardlin/Downloads/QmfWobqsHG46msBCqdMRcXbBw2cVNot3KffzrN5zGoZmxD", "/tmp/out.json")
-decrypt_file(key, "/Users/bernardlin/Downloads/QmbcmibHbytLoScZFsKDPS2SsvW24tEwhQ4DD7NQ3i5EMS", "/tmp/out.csv")
+def main(argList):
+
+    # key = '9f86d081884c7d659a2feaa0c55ad015'
+    key = hashlib.sha256(argList[0].encode('utf-8')).hexdigest()[:32]
+
+    # encrypt_file(key, "/tmp/f92f25b0-3a1d-11e9-a778-1f41c54b70ff.json")
+    # decrypt_file(key, "/Users/bernardlin/Downloads/QmfWobqsHG46msBCqdMRcXbBw2cVNot3KffzrN5zGoZmxD", "/tmp/out.json")
+    decrypt_file (key, argList[1], argList[2])
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
