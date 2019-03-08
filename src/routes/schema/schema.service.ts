@@ -241,7 +241,7 @@ export class SchemaService {
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
             let datasetInfo = data ['marketplace_data_source_detail'][0];
             // remove non-owner view info
-            console.log (userId);
+            // console.log (userId);
             // userID == 0 is the special case for returning dataset right after saved
             if (userId != 0 && userId != datasetInfo.dataset_owner_id) {
                 delete datasetInfo["api_key"];
