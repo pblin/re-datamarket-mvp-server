@@ -40,7 +40,7 @@ router.get('/search', (req, res, next) => {
         region = req.query.region.toLowerCase();
     }
     if (req.query.terms !== undefined) {
-        terms = req.query.terms.toLowerCaes();
+        terms = req.query.terms.toLowerCase();
     } else {
         return res.status(404).send("no search terms")
     }

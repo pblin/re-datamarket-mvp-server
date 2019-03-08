@@ -71,7 +71,7 @@ router.get('/dataset/:assetid', (req, res, next) => {
   if (req.query.userid !== undefined) {
     userId=req.query.userid;
   }
-
+  console.log (userId)
   return schemaService.getAdataset(req.params.assetid, userId).then(datasets => {
     if( datasets < 0 ) {
         return res.status(404).send("resource not found");
