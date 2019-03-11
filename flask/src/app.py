@@ -14,6 +14,7 @@ import json
 import csv
 import binascii
 import hashlib
+import gzip
 import os, random, struct
 
 
@@ -40,7 +41,7 @@ def encrypt_file(key, in_filename, out_filename=None, chunksize=64*1024):
                 if len(chunk) == 0:
                     break
                 elif len(chunk) % 16 != 0:
-                    chunk += ' '.encode() * (16 - len(chunk) % 16)
+                    chunk += ' '.encode('utf8') * (16 - len(chunk) % 16)
 
                 outfile.write(encryptor.encrypt(chunk))
 
@@ -53,14 +54,14 @@ def decrypt_file(key, in_filename, out_filename=None, chunksize=24*1024):
         out_filename will be 'aaa.zip')
     """
     if not out_filename:
-        out_filename = os.path.splitext(in_filename)[0]
+        out_filename = os.path.splitext(in_filename)[0] + '.gz'
 
     with open(in_filename, 'rb') as infile:
         origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
         iv = infile.read(16)
         decryptor = AES.new(key, AES.MODE_CBC, iv)
 
-        with open(out_filename, 'wb') as outfile:
+        with open(out_filename + '.gz', 'wb') as outfile:
             while True:
                 chunk = infile.read(chunksize)
                 if len(chunk) == 0:
@@ -196,12 +197,14 @@ def deliver_sample_data (conn,table,id,limit,output):
     rows = cursor.fetchall()
     cols = [ x['field_name'] for x in rows ]
 
-    #32 bytes encryption keys
     selectQuery = "select enc_data_key from marketplace.data_source_detail where id = " + put_quotes(id)
 
     cursor.execute(selectQuery, id)
     row = cursor.fetchone()
+
+    # 32 bytes encryption keys
     cypherKey = hashlib.sha256(row['enc_data_key'].encode('utf-8')).hexdigest()[:32]
+
     print ("key = %s" % cypherKey)
 
     selectQuery = "select {} from cherre_sample_data.%s " % table  + "limit %s" % limit
@@ -214,11 +217,12 @@ def deliver_sample_data (conn,table,id,limit,output):
 
     jsonString = json.dumps(rows, indent=4, sort_keys=False, default=str)
 
-    resultFileName = "/tmp/%s.%s" % (id, output)
+    resultFileName = "/tmp/%s.%s.gz" % (id, output)
 
-    outFile = open(resultFileName, "w")
+    outFile = gzip.open(resultFileName, "w")
+
     if output == "json":
-        outFile.write (jsonString)
+        outFile.write (jsonString.encode('utf8'))
     else:
         csvWriter = csv.DictWriter(outFile,fieldnames=cols)
         csvWriter.writeheader()
@@ -227,15 +231,17 @@ def deliver_sample_data (conn,table,id,limit,output):
 
     outFile.close()
     encFileName = resultFileName + '.enc'
-    encrypt_file(cypherKey,resultFileName,encFileName)
+    encrypt_file(cypherKey.encode('utf8'), resultFileName,encFileName)
 
     #put the file out to ipfs throug Infura service
     serverConfig = config(section='ipfs')
+
     api = ipfsApi.Client(serverConfig['endpoint'], serverConfig['port'])
     res = api.add(encFileName)
 
     #return ipfs Hash
-    return res[0]['Hash']
+    print ( res['Hash'])
+    return res['Hash']
 
 
 @app.route('/sample/<tbl>/<ds_id>')
