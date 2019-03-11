@@ -173,40 +173,73 @@ export class SchemaService {
         }
     }
     async getAllDatasetsOfUser (owner_id: number, stage: number) {
-        const query =  
-        `query datasets ($owner_id: Int, $stage: Int ) {
-            marketplace_data_source_detail 
-                  (where: { _and:
-                            [ 
-                                {dataset_owner_id:{ _eq: $owner_id}},
-                                {stage: {_eq: $stage}}
-                            ]
+        let query;
+        let variables;
+
+        if (stage > 0 ) {
+            query =`query datasets ($owner_id: Int, $stage: Int ) {
+                        marketplace_data_source_detail 
+                            (where: { _and:
+                                        [ 
+                                            {dataset_owner_id:{ _eq: $owner_id}},
+                                            {stage: {_eq: $stage}}
+                                        ]
+                                    }
+                            )
+                        {
+                            id,
+                            name,
+                            description,
+                            delivery_method,
+                            access_url,
+                            api_key,
+                            enc_data_key,
+                            num_of_records,
+                            search_terms,
+                            parameters,
+                            country,
+                            state_province,
+                            price_low,
+                            price_high,
+                            json_schema,
+                            stage,
+                            date_created,
+                            date_modified,
                         }
-					)
-           {
-               id,
-               name,
-               description,
-               delivery_method,
-               access_url,
-               api_key,
-               enc_data_key,
-               num_of_records,
-               search_terms,
-               parameters,
-               country,
-               state_province,
-               price_low,
-               price_high,
-               json_schema,
-               stage,
-               date_created,
-               date_modified,
-           }
-         }`
-        let variables = {
-            owner_id,
-            stage
+                        }`
+            variables = {
+                owner_id,
+                stage
+            }
+        } else {
+            query =  `query datasets ($owner_id: Int ) {
+                marketplace_data_source_detail 
+                      (where:{dataset_owner_id:{ _eq: $owner_id}})
+               {
+                   id,
+                   name,
+                   description,
+                   delivery_method,
+                   access_url,
+                   api_key,
+                   enc_data_key,
+                   num_of_records,
+                   search_terms,
+                   parameters,
+                   country,
+                   state_province,
+                   price_low,
+                   price_high,
+                   json_schema,
+                   stage,
+                   date_created,
+                   date_modified
+               }
+             }`
+             
+            variables = {
+                owner_id
+            }
         }
         console.log (query);
         console.log (variables);

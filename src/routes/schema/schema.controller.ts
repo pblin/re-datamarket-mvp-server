@@ -52,7 +52,7 @@ router.post('/', (req, res) => {
 });
 router.get('/user/:userid', (req, res, next) => {
     // console.log (req.params.userid);
-    let stage = 1; //default
+    let stage = -1; //default, all
     if (req.query.stage !== undefined) {
       stage = req.query.stage;
     }
