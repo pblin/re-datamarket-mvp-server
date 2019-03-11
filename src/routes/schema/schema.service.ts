@@ -172,10 +172,17 @@ export class SchemaService {
             return -1; 
         }
     }
-    async getAllDatasetsOfUser (owner_id: number) {
-        const query =  `query datasets ($owner_id: Int ) {
+    async getAllDatasetsOfUser (owner_id: number, stage: number) {
+        const query =  
+        `query datasets ($owner_id: Int, $stage: Int ) {
             marketplace_data_source_detail 
-                  (where:{dataset_owner_id:{ _eq: $owner_id}})
+                  (where: { _and:
+                            [ 
+                                {dataset_owner_id:{ _eq: $owner_id}},
+                                {stage: {_eq: $stage}}
+                            ]
+                        }
+					)
            {
                id,
                name,
@@ -194,12 +201,16 @@ export class SchemaService {
                json_schema,
                stage,
                date_created,
-               date_modified
+               date_modified,
            }
          }`
         let variables = {
-            owner_id
+            owner_id,
+            stage
         }
+        console.log (query);
+        console.log (variables);
+        
         let data = await this.client.request(query, variables);
         
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
@@ -250,6 +261,24 @@ export class SchemaService {
             }
             // console.log(datasetInfo);
             return datasetInfo;
+        } else {
+            return -1; 
+        }
+    }
+
+    async getAvailableTypes () {
+        const query =  `query  {
+            marketplace_field (distinct_on: [type] )
+  	        { 
+  		        type
+            }
+        }`
+
+        let data = await this.client.request(query);
+        console.log(data);
+        if ( data ['marketplace_field'] !== undefined ) {
+            let typeInfo = data ['marketplace_field'];
+            return typeInfo;
         } else {
             return -1; 
         }

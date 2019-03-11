@@ -9,7 +9,7 @@ export class MarketplaceService {
     }
     async getAllDatasets () {
         const query =  `query  {
-            marketplace_data_source_detail 
+            marketplace_data_source_detail ( where: {stage: {_eq: 3 }})
            {
                 id,
                 name,

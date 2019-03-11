@@ -52,7 +52,11 @@ router.post('/', (req, res) => {
 });
 router.get('/user/:userid', (req, res, next) => {
     // console.log (req.params.userid);
-    return schemaService.getAllDatasetsOfUser(req.params.userid).then(datasets => {
+    let stage = 1; //default
+    if (req.query.stage !== undefined) {
+      stage = req.query.stage;
+    }
+    return schemaService.getAllDatasetsOfUser(req.params.userid, stage).then(datasets => {
       if( datasets < 0 ) {
           return res.status(404).send("resource not found");
       } else {
@@ -71,6 +75,7 @@ router.get('/dataset/:assetid', (req, res, next) => {
   if (req.query.userid !== undefined) {
     userId=req.query.userid;
   }
+  
   console.log (userId)
   return schemaService.getAdataset(req.params.assetid, userId).then(datasets => {
     if( datasets < 0 ) {
@@ -83,7 +88,18 @@ router.get('/dataset/:assetid', (req, res, next) => {
 })
 });
 
-
+router.get('/types', (req, res, next) => {
+  console.log ('get types')
+  return schemaService.getAvailableTypes().then(datatypes => {
+    if( datatypes < 0 ) {
+        return res.status(404).send("resource not found");
+    } else {
+        return res.status(200).send(datatypes)
+    }
+}).catch(() => {
+    return res.status(500).send("unknown server error."); //TODO: Introduce better error handling
+})
+});
 router.delete('/dataset/:assetid', (req, res, netxt) => {
     console.log (req.params.assetid);
     if (req.params.assetid === undefined) {
