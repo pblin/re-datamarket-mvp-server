@@ -9,46 +9,59 @@ router.post('/', (req, res) => {
       let schemaItems = null;
       // console.log(req.body);
       try  {
-        schemaItems = JSON.parse(req.body.json_schema);
+        if (req.body.json_schema != "")
+          schemaItems = JSON.parse(req.body.json_schema);
       }
       catch (e) {
         console.log(e);
         res.status(500).send(e.message);
       }
-      return schemaService.saveDataset(req.body).then((result) => {
-        if (result < 0) {
-          res.status(500).send("grahQL error");
-        } else {
-          returnSavedItem = schemaService.deletePriorSavedFields(req.body.id);
-          console.log(returnSavedItem)
-          return returnSavedItem;
-        }
-      }).then ((result) => { 
-        if (result < 0) {
-            res.status(500).send("DB operations error.");
-        } else { 
-          return schemaService.extractAndSaveDataFields(
-                              schemaItems, 
-                              req.body.id,
-                              req.body.search_terms,
-                              req.body.state_province,
-                              req.body.country
-                            );
-         }
-        }).then ( (result) => {
-          if (result < 0 ){
-            res.status(500).send("graphQL error");
+      if (req.body.stage == 3) { //in published stage
+        console.log ("publish");
+        return schemaService.saveDataset(req.body).then((result) => {
+          if (result < 0) {
+            res.status(500).send("grahQL error");
           } else {
-             return schemaService.getAdataset(req.body.id, 0);
+            returnSavedItem = schemaService.deletePriorSavedFields(req.body.id);
+            // console.log(returnSavedItem)
+            return returnSavedItem;
           }
-        }).then ( (result) => {
-          if (result < 0 ) {
-            res.status(500).send("graphQL error");
-          } else {
-            // console.log(result);
-            res.status(200).send(result);
+        }).then ((result) => { 
+          if (result < 0) {
+              res.status(500).send("DB operations error.");
+          } else { 
+            return schemaService.extractAndSaveDataFields(
+                                schemaItems, 
+                                req.body.id,
+                                req.body.search_terms,
+                                req.body.state_province,
+                                req.body.country
+                              );
           }
-      }).catch ((err) => {res.status(500).send(err.messge); });
+          }).then ( (result) => {
+            if (result < 0 ){
+              res.status(500).send("graphQL error");
+            } else {
+              return schemaService.getAdataset(req.body.id, 0);
+            }
+          }).then ( (result) => {
+            if (result < 0 ) {
+              res.status(500).send("graphQL error");
+            } else {
+              // console.log(result);
+              res.status(200).send(result);
+            }
+        }).catch ((err) => {res.status(500).send(err.messge); });
+      } else {
+          console.log ("just save.");
+          return schemaService.saveDataset(req.body).then((result) => {
+            if (result < 0) {
+              res.status(500).send("grahQL error");
+            } else {
+              res.status(200).send(result.toString());
+            }
+          }).catch ((err) => {res.status(500).send(err.messge); });
+      }
 });
 router.get('/user/:userid', (req, res, next) => {
     // console.log (req.params.userid);

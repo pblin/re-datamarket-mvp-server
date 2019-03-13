@@ -41,32 +41,17 @@ export class SchemaService {
             affected_rows
             }
         }`;
-    
-        const variables = {
-        objects: [
-            {
-            id: ds.id,
-            name: ds.name,
-            description: ds.description,
-            delivery_method: ds.delivery_method,
-            access_url: ds.access_url,
-            api_key: ds.api_key,
-            enc_data_key: ds.enc_data_key,
-            num_of_records: ds.num_of_records,
-            search_terms: ds.search_terms,
-            parameters: ds.parameters,
-            country: ds.country,
-            state_province: ds.state_province,
-            dataset_owner_id: ds.dataset_owner_id,
-            price_low: ds.price_low,
-            price_high: ds.price_high,
-            stage: ds.stage,
-            date_created: ds.date_created,
-            date_modified: ds.date_modified,
-            json_schema: ds.json_schema,
+        let variables = {
+            objects: []
+            };
+        let obj = {}
+        for (const key of Object.keys(ds)) {
+            if (ds[key] != null) {
+                obj[key] = ds[key]
             }
-        ]
-        };
+        }
+        variables.objects.push(obj);
+        console.log(variables);
     
         let data = await this.client.request(mut, variables);
         // @ts-ignore
@@ -236,7 +221,7 @@ export class SchemaService {
                    date_modified
                }
              }`
-             
+
             variables = {
                 owner_id
             }
