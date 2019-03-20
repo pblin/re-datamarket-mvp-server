@@ -2,16 +2,19 @@ import * as express from 'express';
 import * as Stripe from 'stripe';
 import * as multer from 'multer';
 import * as uuidv4 from 'uuid/v4';
+import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
 const router = express.Router();
 const upload = multer();
 
-router.post('/payment', upload.none(), async (req, res) => {
+router.post('/charge/:userid', upload.none(), async (req, res) => {
   console.log(JSON.stringify(req.body));
+  if (req.params.userid === undefined) 
+    res.sendStatus(404).send("user id needed");
 
   let options = {
     apiVersion: 'v1', // default
-    endpoint: 'http://demo-app.rebloc.io:8200', // default
-    token: 's.NqHfvnUc31muxw4Vi41ZGNCb' // optional client token; 
+    endpoint: VAULT_SERVER, // default
+    token:  VAULT_CLIENT_TOKEN // optional client token; 
   };
 
   let vault = require("node-vault")(options);
@@ -25,6 +28,7 @@ router.post('/payment', upload.none(), async (req, res) => {
   stripe = new Stripe(result.data['skey']);
   let error;
   let status = 'failed';
+  let code = 200;
   try {
     const {
       product,
@@ -49,12 +53,12 @@ router.post('/payment', upload.none(), async (req, res) => {
       stripeTokenType,
     } = req.body;
 
- 
+    console.log("amount=" + amount)
     const customer = await stripe.customers.create({
       email: stripeEmail,
       source: stripeToken,
       metadata: {
-        userId: req.user.id,
+        userId: req.params.userid,
       },
     });
 
@@ -62,7 +66,7 @@ router.post('/payment', upload.none(), async (req, res) => {
       const idempotency_key = uuidv4();
       const charge = await stripe.charges.create(
         {
-          amount,
+          amount: amount,
           currency: currency,
           customer: customer.id,
           description: description,
@@ -76,13 +80,15 @@ router.post('/payment', upload.none(), async (req, res) => {
     } else {
       throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
     }
-
+    
     status = 'success';
+    code = 200;
     console.log(status);
 
   } catch (err) {
     console.error(err);
     error = err;
+    code = 500;
     console.log(err);
   }
 

@@ -2,12 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 import 'graphql-request';
-import { GraphQLClient } from 'graphql-request';
-import { APIKEY, GRAPHQL } from './config/ConfigEnv';
 import ProfileRouter from './routes/profile/profile.controller';
 import SchemaRouter  from './routes/schema/schema.controller';
 import MarketplaceRouter from './routes/marketplace/marketplace.controller';
-import PaymentRouter from './routes/stripe/stripe.service';
+import FiatRouter from './routes/stripe/stripe.service';
 const app = express();
 const methodOverride = require('method-override');
 ``
@@ -25,7 +23,7 @@ app.get('/health', (req, res) => {
 app.use('/profile', ProfileRouter);
 app.use('/schema', SchemaRouter);
 app.use('/marketplace', MarketplaceRouter);
-app.use('/payment', PaymentRouter);
+app.use('/stripe', FiatRouter);
 
 const PORT = 9000;
 

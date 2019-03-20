@@ -38,7 +38,6 @@ export class MarketplaceService {
         }
     }
 
-
     async getDataFields(country:string, region:string, terms:string) {
         let query =  `query data_fields ($country:String, $region: String) {
             marketplace_source_of_field (
