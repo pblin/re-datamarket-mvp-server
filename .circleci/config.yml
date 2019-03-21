@@ -30,7 +30,7 @@ jobs:
             scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.dev .env
             scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/*.pem .
             docker build -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
-            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+            docker login -u $DOCKER_LOGIN --password $DOCKER_PWD 
             docker push bernardlin/apiserver:beta
       - run:
           name: start up docker
