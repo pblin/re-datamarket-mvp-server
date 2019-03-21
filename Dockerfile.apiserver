@@ -1,0 +1,15 @@
+FROM node:10.15.3-alpine
+
+WORKDIR /app
+
+COPY *.json /app/
+COPY *.pem /app/
+COPY .env /app/
+
+COPY ./src  /app/src
+
+RUN yarn
+
+ENTRYPOINT  ["yarn"]
+CMD ["run", "start"]
+

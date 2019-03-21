@@ -8,7 +8,12 @@ import MarketplaceRouter from './routes/marketplace/marketplace.controller';
 import FiatRouter from './routes/stripe/stripe.service';
 const app = express();
 const methodOverride = require('method-override');
-``
+import { HTTPS_ON, KEY_PASS, SSL_PEM, SSL_KEY } from './config/ConfigEnv';
+import * as https from 'https';
+import * as http from 'http';
+import * as fs from 'fs';
+
+
 app.use(function(req,res,next){console.log(req.method,req.url); next();});
 app.use(cors());
 app.use(bodyParser.json());
@@ -24,9 +29,23 @@ app.use('/profile', ProfileRouter);
 app.use('/schema', SchemaRouter);
 app.use('/marketplace', MarketplaceRouter);
 app.use('/stripe', FiatRouter);
+ 
+if (HTTPS_ON == 'YES') { 
+    const credentials = {
+        key: fs.readFileSync(SSL_KEY),
+        cert: fs.readFileSync(SSL_PEM),
+        passphrase: KEY_PASS
+      };
+    let httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(9001);
+    console.log(`API on https port 9001.`);
 
-const PORT = 9000;
+  } else { 
+    let httpServer = http.createServer(app);
+    httpServer.listen(9000);
+    console.log(`API on http port 9000.`);
+}
 
-app.listen(PORT, () => {
-  console.log(`Rebloc API server running on port ${PORT}.`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Rebloc API server running on port ${PORT}.`);
+// });

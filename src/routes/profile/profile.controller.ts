@@ -8,23 +8,23 @@ const profileService = new ProfileService();
 router.get('/:email', (req, res, next) => {
     return profileService.getProfile(req.params.email).then((profile) => {
         if(!profile['marketplace_customer'].length) {
-            return res.status(404).send();
+            return res.sendStatus(404);
         } else {
-            return res.status(200).send(profile['marketplace_customer'][0])
+            return res.sendStatus(200).send(profile['marketplace_customer'][0])
         }
     }).catch(() => {
-        return res.status(500).send(); //TODO: Introduce better error handling
+        return res.sendStatus(500); //TODO: Introduce better error handling
     })
 });
 
 router.post('/', (req, res) => {
     return profileService.createProfile(req.body).then((profile) => {
-        res.status(200).send(profile['insert_marketplace_customer'].returning[0])
+        res.sendStatus(200).send(profile['insert_marketplace_customer'].returning[0])
     }).catch((err) => {
-       return res.status(500).send();
+       return res.sendStatus(500);
     });
 
-    res.status(200).send();
+    res.sendStatus(200);
 });
 
 export default router;
