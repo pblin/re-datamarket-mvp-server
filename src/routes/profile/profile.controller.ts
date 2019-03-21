@@ -10,7 +10,7 @@ router.get('/:email', (req, res, next) => {
         if(!profile['marketplace_customer'].length) {
             return res.sendStatus(404);
         } else {
-            return res.sendStatus(200).send(profile['marketplace_customer'][0])
+            return res.send(profile['marketplace_customer'][0])
         }
     }).catch(() => {
         return res.sendStatus(500); //TODO: Introduce better error handling
@@ -23,8 +23,6 @@ router.post('/', (req, res) => {
     }).catch((err) => {
        return res.sendStatus(500);
     });
-
-    res.sendStatus(200);
 });
 
 export default router;
