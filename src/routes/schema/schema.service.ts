@@ -41,32 +41,17 @@ export class SchemaService {
             affected_rows
             }
         }`;
-    
-        const variables = {
-        objects: [
-            {
-            id: ds.id,
-            name: ds.name,
-            description: ds.description,
-            delivery_method: ds.delivery_method,
-            access_url: ds.access_url,
-            api_key: ds.api_key,
-            enc_data_key: ds.enc_data_key,
-            num_of_records: ds.num_of_records,
-            search_terms: ds.search_terms,
-            parameters: ds.parameters,
-            country: ds.country,
-            state_province: ds.state_province,
-            dataset_owner_id: ds.dataset_owner_id,
-            price_low: ds.price_low,
-            price_high: ds.price_high,
-            stage: ds.stage,
-            date_created: ds.date_created,
-            date_modified: ds.date_modified,
-            json_schema: ds.json_schema,
+        let variables = {
+            objects: []
+            };
+        let obj = {}
+        for (const key of Object.keys(ds)) {
+            if (ds[key] != null) {
+                obj[key] = ds[key]
             }
-        ]
-        };
+        }
+        variables.objects.push(obj);
+        console.log(variables);
     
         let data = await this.client.request(mut, variables);
         // @ts-ignore
@@ -172,34 +157,78 @@ export class SchemaService {
             return -1; 
         }
     }
-    async getAllDatasetsOfUser (owner_id: number) {
-        const query =  `query datasets ($owner_id: Int ) {
-            marketplace_data_source_detail 
-                  (where:{dataset_owner_id:{ _eq: $owner_id}})
-           {
-               id,
-               name,
-               description,
-               delivery_method,
-               access_url,
-               api_key,
-               enc_data_key,
-               num_of_records,
-               search_terms,
-               parameters,
-               country,
-               state_province,
-               price_low,
-               price_high,
-               json_schema,
-               stage,
-               date_created,
-               date_modified
-           }
-         }`
-        let variables = {
-            owner_id
+    async getAllDatasetsOfUser (owner_id: number, stage: number) {
+        let query;
+        let variables;
+
+        if (stage > 0 ) {
+            query =`query datasets ($owner_id: Int, $stage: Int ) {
+                        marketplace_data_source_detail 
+                            (where: { _and:
+                                        [ 
+                                            {dataset_owner_id:{ _eq: $owner_id}},
+                                            {stage: {_eq: $stage}}
+                                        ]
+                                    }
+                            )
+                        {
+                            id,
+                            name,
+                            description,
+                            delivery_method,
+                            access_url,
+                            api_key,
+                            enc_data_key,
+                            num_of_records,
+                            search_terms,
+                            parameters,
+                            country,
+                            state_province,
+                            price_low,
+                            price_high,
+                            json_schema,
+                            stage,
+                            date_created,
+                            date_modified,
+                        }
+                        }`
+            variables = {
+                owner_id,
+                stage
+            }
+        } else {
+            query =  `query datasets ($owner_id: Int ) {
+                marketplace_data_source_detail 
+                      (where:{dataset_owner_id:{ _eq: $owner_id}})
+               {
+                   id,
+                   name,
+                   description,
+                   delivery_method,
+                   access_url,
+                   api_key,
+                   enc_data_key,
+                   num_of_records,
+                   search_terms,
+                   parameters,
+                   country,
+                   state_province,
+                   price_low,
+                   price_high,
+                   json_schema,
+                   stage,
+                   date_created,
+                   date_modified
+               }
+             }`
+
+            variables = {
+                owner_id
+            }
         }
+        console.log (query);
+        console.log (variables);
+        
         let data = await this.client.request(query, variables);
         
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
@@ -250,6 +279,24 @@ export class SchemaService {
             }
             // console.log(datasetInfo);
             return datasetInfo;
+        } else {
+            return -1; 
+        }
+    }
+
+    async getAvailableTypes () {
+        const query =  `query  {
+            marketplace_field (distinct_on: [type] )
+  	        { 
+  		        type
+            }
+        }`
+
+        let data = await this.client.request(query);
+        console.log(data);
+        if ( data ['marketplace_field'] !== undefined ) {
+            let typeInfo = data ['marketplace_field'];
+            return typeInfo;
         } else {
             return -1; 
         }

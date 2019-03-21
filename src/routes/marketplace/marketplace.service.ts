@@ -9,7 +9,7 @@ export class MarketplaceService {
     }
     async getAllDatasets () {
         const query =  `query  {
-            marketplace_data_source_detail 
+            marketplace_data_source_detail ( where: {stage: {_eq: 3 }})
            {
                 id,
                 name,
@@ -37,7 +37,6 @@ export class MarketplaceService {
             return -1; 
         }
     }
-
 
     async getDataFields(country:string, region:string, terms:string) {
         let query =  `query data_fields ($country:String, $region: String) {
