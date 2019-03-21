@@ -12,9 +12,9 @@ jobs:
     steps:
       - checkout
       - run:
-        name: run yarn
-        command: |
-          yarn 
+          name: run yarn
+          command: |
+            yarn 
  
   deploy:
     machine: 
