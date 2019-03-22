@@ -54,13 +54,15 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
     } = req.body;
 
     console.log("amount=" + amount)
-    const customer = await stripe.customers.create({
-      email: stripeEmail,
-      source: stripeToken,
-      metadata: {
-        userId: req.params.userid,
-      },
-    });
+
+    // does not have the need to create a customer for the moment
+    // const customer = await stripe.customers.create({
+    //   email: stripeEmail,
+    //   source: stripeToken,
+    //   metadata: {
+    //     userId: req.params.userid,
+    //   }
+    // });
 
     if (stripeTokenType === 'card') {
       const idempotency_key = uuidv4();
@@ -68,8 +70,14 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
         {
           amount: amount,
           currency: currency,
-          customer: customer.id,
           description: description,
+          receipt_email: stripeEmail,
+          source: stripeToken,
+          statement_descriptor: 'Rebloc marketplace',
+          metadata: {
+            customerId: req.params.userid,
+            productId: product
+          }
         },
         {
           idempotency_key,
