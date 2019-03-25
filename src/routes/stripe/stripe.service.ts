@@ -55,15 +55,6 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
 
     console.log("amount=" + amount)
 
-    // does not have the need to create a customer for the moment
-    // const customer = await stripe.customers.create({
-    //   email: stripeEmail,
-    //   source: stripeToken,
-    //   metadata: {
-    //     userId: req.params.userid,
-    //   }
-    // });
-
     if (stripeTokenType === 'card') {
       const idempotency_key = uuidv4();
       const charge = await stripe.charges.create(
