@@ -259,7 +259,8 @@ export class SchemaService {
                json_schema,
                date_created,
                date_modified,
-               dataset_owner_id
+               dataset_owner_id,
+               stage
            }
          }`
         let variables = {
