@@ -19,7 +19,7 @@ router.get('/:email', (req, res, next) => {
 
 router.post('/', (req, res) => {
     return profileService.createProfile(req.body).then((profile) => {
-        res.sendStatus(200).send(profile['insert_marketplace_customer'].returning[0])
+        res.send(profile['insert_marketplace_customer'].returning[0])
     }).catch((err) => {
        return res.sendStatus(500);
     });
