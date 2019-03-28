@@ -6,11 +6,14 @@ const router = express.Router();
 const schemaService= new SchemaService();
 router.post('/', (req, res) => {
       let returnSavedItem = null;
+      let schema = null;
       let schemaItems = null;
-      // console.log(req.body);
+      let schemaName = null;
+      console.log(req.body);
       try  {
         if (req.body.json_schema != "")
-          schemaItems = JSON.parse(req.body.json_schema);
+          schema= JSON.parse(req.body.json_schema);
+          schemaItems = schema.fields;
       }
       catch (e) {
         console.log(e);
@@ -31,7 +34,7 @@ router.post('/', (req, res) => {
               res.status(500).send("DB operations error.");
           } else { 
             return schemaService.extractAndSaveDataFields(
-                                schemaItems, 
+                                schema, 
                                 req.body.id,
                                 req.body.search_terms,
                                 req.body.state_province,

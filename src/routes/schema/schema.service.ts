@@ -60,7 +60,7 @@ export class SchemaService {
         } else return -1; 
     }
   
-    async extractAndSaveDataFields (schemaItems:any, dsId:string, search_terms:string, region:string, country:string) {
+    async extractAndSaveDataFields (schema:any, dsId:string, search_terms:string, region:string, country:string) {
         const mut = `
             mutation insert_marketplace_source_of_field($objects:[marketplace_source_of_field_insert_input!]!)
             {
@@ -69,6 +69,7 @@ export class SchemaService {
                 on_conflict: { 
                     constraint: source_of_field_pkey
                     update_columns: [ 
+                        table_name
                         field_name
                         field_label
                         description
@@ -86,6 +87,8 @@ export class SchemaService {
         let variables = {
             objects: []
         };
+        let schemaItems = schema.fields;
+        let tableName = schema.schema_name;
     
         for (var i = 0; i < schemaItems.length; i++) {
             if (schemaItems[i].label === undefined) {
@@ -93,6 +96,7 @@ export class SchemaService {
             }
             // console.log(schemaItems[i]);
         const item = {
+            table_name: schema.schema_name,
             field_name:schemaItems[i].name,
             description:schemaItems[i].description.toLowerCase(),
             field_label:schemaItems[i].label,
