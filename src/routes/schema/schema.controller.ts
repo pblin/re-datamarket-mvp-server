@@ -11,9 +11,10 @@ router.post('/', (req, res) => {
       let schemaName = null;
       console.log(req.body);
       try  {
-        if (req.body.json_schema != "")
+        if (req.body.json_schema != null && req.body.json_schema !== '') {
           schema= JSON.parse(req.body.json_schema);
           schemaItems = schema.fields;
+        }
       }
       catch (e) {
         console.log(e);
