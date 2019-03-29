@@ -112,7 +112,7 @@ export class SchemaService {
         }
    
         let data = await this.client.request(mut, variables);
-        console.log(data);
+        // console.log(data);
 
         if (data !== undefined ) {
             return data['insert_marketplace_source_of_field'].affected_rows;
