@@ -33,6 +33,7 @@ export class SchemaService {
                 price_high,
                 json_schema,
                 stage,
+                table_name,
                 date_created,
                 date_modified
             ] 
@@ -43,8 +44,13 @@ export class SchemaService {
         }`;
         let variables = {
             objects: []
-            };
+            }; 
+        
         let obj = {}
+        if  (ds['json_schema'] != null) {
+            let schema = JSON.parse(ds['json_schema']);
+            obj['table_name'] = schema.schema_name;
+        }
         for (const key of Object.keys(ds)) {
             if (ds[key] != null) {
                 obj[key] = ds[key]
@@ -59,8 +65,7 @@ export class SchemaService {
             return data['insert_marketplace_data_source_detail'].affected_rows;
         } else return -1; 
     }
-  
-    async extractAndSaveDataFields (schemaItems:any, dsId:string, search_terms:string, region:string, country:string) {
+    async extractAndSaveDataFields (schema:any, dsId:string, search_terms:string, region:string, country:string) {
         const mut = `
             mutation insert_marketplace_source_of_field($objects:[marketplace_source_of_field_insert_input!]!)
             {
@@ -86,6 +91,7 @@ export class SchemaService {
         let variables = {
             objects: []
         };
+        let schemaItems = schema.fields;
     
         for (var i = 0; i < schemaItems.length; i++) {
             if (schemaItems[i].label === undefined) {
@@ -106,7 +112,7 @@ export class SchemaService {
         }
    
         let data = await this.client.request(mut, variables);
-        console.log(data);
+        // console.log(data);
 
         if (data !== undefined ) {
             return data['insert_marketplace_source_of_field'].affected_rows;
@@ -186,6 +192,9 @@ export class SchemaService {
                             state_province,
                             price_low,
                             price_high,
+                            table_name, 
+                            data_hash,
+                            sample_hash,
                             json_schema,
                             stage,
                             date_created,
@@ -215,6 +224,9 @@ export class SchemaService {
                    state_province,
                    price_low,
                    price_high,
+                   table_name, 
+                   data_hash,
+                   sample_hash,
                    json_schema,
                    stage,
                    date_created,
@@ -256,6 +268,9 @@ export class SchemaService {
                state_province,
                price_low,
                price_high,
+               table_name,
+               sample_hash,
+               data_hash,
                json_schema,
                date_created,
                date_modified,
@@ -266,9 +281,12 @@ export class SchemaService {
         let variables = {
             id
         }
+        console.log(query);
+        console.log(variables);
         let data = await this.client.request(query, variables);
         
-        if ( data ['marketplace_data_source_detail'] !== undefined ) {
+        if ( data ['marketplace_data_source_detail'] !== undefined && 
+             data['marketplace_data_source_detail'].length > 0 ) {
             let datasetInfo = data ['marketplace_data_source_detail'][0];
             // remove non-owner view info
             // console.log (userId);

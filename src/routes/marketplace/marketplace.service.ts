@@ -23,6 +23,8 @@ export class MarketplaceService {
                 state_province,
                 price_low,
                 price_high,
+                data_hash,
+                sample_hash, 
                 json_schema,
                 date_created,
                 date_modified
@@ -118,6 +120,8 @@ export class MarketplaceService {
           price_low,
           price_high,
           json_schema,
+          sample_hash,
+          data_hash,
           date_created,
           date_modified
         }
@@ -152,6 +156,8 @@ export class MarketplaceService {
                price_low,
                price_high,
                json_schema,
+               sample_hash,
+               data_hash,
                stage,
                date_created,
                date_modified
