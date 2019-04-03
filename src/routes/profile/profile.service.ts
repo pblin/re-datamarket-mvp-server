@@ -7,7 +7,6 @@ export class ProfileService {
     constructor() {
         this.client = Db.getInstance().client;
     }
-
     async getProfile(email: string) {
         const query = `query customer ($email: String ) {
           marketplace_customer (where:{primary_email:{ _eq : $email }})

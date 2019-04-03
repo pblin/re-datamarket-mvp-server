@@ -6,23 +6,29 @@ import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
 const router = express.Router();
 const upload = multer();
 
+const options = {
+  apiVersion: 'v1', // default
+  endpoint: VAULT_SERVER, // default
+  token:  VAULT_CLIENT_TOKEN // optional client token; 
+};
+const vault = require("node-vault")(options);
 router.post('/charge/:userid', upload.none(), async (req, res) => {
   console.log(JSON.stringify(req.body));
   if (req.params.userid === undefined) 
     res.sendStatus(404).send("user id needed");
 
-  let options = {
-    apiVersion: 'v1', // default
-    endpoint: VAULT_SERVER, // default
-    token:  VAULT_CLIENT_TOKEN // optional client token; 
-  };
-
-  let vault = require("node-vault")(options);
   let stripe; 
-  let result = await vault.read('secret/stripe');
-  console.log(result.data);
+  let result;
+  try { 
+    result = await vault.read('secret/stripe');
+  } 
+  catch (err) {
+    console.log(err);
+    res.status(500).send("secret vault connection problem");
+  }
+  // console.log(result.data);
   if (result == null || result['data'] == null || result['data'] === undefined) {
-    res.sendStatus(500).json({ result, "message":"Payment API error"});
+      res.status(500).json({ result, "message":"Payment credential error"});
   }
 
   stripe = new Stripe(result.data['skey']);
@@ -85,10 +91,10 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
     console.log(status);
 
   } catch (err) {
-    console.error(err);
-    error = err;
-    code = 500;
-    console.log(err);
+      console.error(err);
+      error = err;
+      code = 500;
+      console.log(err);
   }
 
   res.json({ error, status });

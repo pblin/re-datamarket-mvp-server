@@ -5,7 +5,8 @@ import 'graphql-request';
 import ProfileRouter from './routes/profile/profile.controller';
 import SchemaRouter  from './routes/schema/schema.controller';
 import MarketplaceRouter from './routes/marketplace/marketplace.controller';
-import FiatRouter from './routes/stripe/stripe.service';
+import EmailService from './routes/email/email.service';
+import FiatService from './routes/stripe/stripe.service';
 const app = express();
 const methodOverride = require('method-override');
 import { HTTPS_ON, KEY_PASS, SSL_PEM, SSL_KEY } from './config/ConfigEnv';
@@ -28,7 +29,8 @@ app.get('/health', (req, res) => {
 app.use('/profile', ProfileRouter);
 app.use('/schema', SchemaRouter);
 app.use('/marketplace', MarketplaceRouter);
-app.use('/stripe', FiatRouter);
+app.use('/stripe', FiatService);
+app.use('/emailer', EmailService);
  
 if (HTTPS_ON == 'YES') { 
     const credentials = {
