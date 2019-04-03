@@ -3,7 +3,6 @@ import {GraphQLClient} from 'graphql-request';
 
 export class SchemaService {
     client: GraphQLClient;
-
     constructor() {
         this.client = Db.getInstance().client;
     }
@@ -34,6 +33,8 @@ export class SchemaService {
                 json_schema,
                 stage,
                 table_name,
+                sample_access_url,
+                enc_sample_key,
                 date_created,
                 date_modified
             ] 
@@ -60,7 +61,7 @@ export class SchemaService {
         console.log(variables);
     
         let data = await this.client.request(mut, variables);
-        // @ts-ignore
+        
         if (data !== undefined) {
             return data['insert_marketplace_data_source_detail'].affected_rows;
         } else return -1; 
@@ -98,17 +99,18 @@ export class SchemaService {
                 schemaItems[i].label = schemaItems[i].name.replace("_", " ").toLowerCase();
             }
             // console.log(schemaItems[i]);
-        const item = {
-            field_name:schemaItems[i].name,
-            description:schemaItems[i].description.toLowerCase(),
-            field_label:schemaItems[i].label,
-            field_type:schemaItems[i].type,
-            region: region,
-            country: country,
-            search_terms:search_terms,
-            source_id:dsId,
-        };
-        variables.objects.push(item);
+            const item = {
+                    field_name:schemaItems[i].name,
+                    description:schemaItems[i].description.toLowerCase(),
+                    field_label:schemaItems[i].label,
+                    field_type:schemaItems[i].type,
+                    region: region,
+                    country: country,
+                    search_terms:search_terms,
+                    source_id:dsId,
+                };
+
+            variables.objects.push(item);
         }
    
         let data = await this.client.request(mut, variables);
@@ -131,10 +133,9 @@ export class SchemaService {
 
         let variables = {
             dataset_id
-        }
+        };
 
         let data = await this.client.request(mut, variables);
-
         if (data !== undefined ) {
             return data['delete_marketplace_source_of_field'].affected_rows;
         } else {
@@ -152,10 +153,11 @@ export class SchemaService {
         }`
         let variables = {
             id
-        }
+        };
+
         console.log(variables);
         let data = await this.client.request(mu, variables);
-        console.log(data);
+        // console.log(data);
 
         if ( data ['delete_marketplace_data_source_detail'] !== undefined ) {
             return data ['delete_marketplace_data_source_detail'].affected_rows;
@@ -197,15 +199,18 @@ export class SchemaService {
                             sample_hash,
                             json_schema,
                             stage,
+                            sample_access_url,
+                            enc_sample_key,
                             date_created,
-                            date_modified,
+                            date_modified
                         }
-                        }`
+                        }`;
+
             variables = {
                 owner_id,
                 stage
-            }
-        } else {
+            };
+        } else { //query all stages
             query =  `query datasets ($owner_id: Int ) {
                 marketplace_data_source_detail 
                       (where:{dataset_owner_id:{ _eq: $owner_id}})
@@ -229,6 +234,8 @@ export class SchemaService {
                    sample_hash,
                    json_schema,
                    stage,
+                   sample_access_url,
+                   enc_sample_key,
                    date_created,
                    date_modified
                }
@@ -241,7 +248,14 @@ export class SchemaService {
         console.log (query);
         console.log (variables);
         
-        let data = await this.client.request(query, variables);
+        let data; 
+        try {
+            data  = await this.client.request(query, variables);
+        } 
+        catch (err) {
+            console.log(err);
+            return -1;
+        }
         
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
             return data ['marketplace_data_source_detail'];
@@ -274,6 +288,8 @@ export class SchemaService {
                json_schema,
                date_created,
                date_modified,
+               sample_access_url,
+               enc_sample_key,
                dataset_owner_id
            }
          }`
@@ -283,7 +299,7 @@ export class SchemaService {
         console.log(query);
         console.log(variables);
         let data = await this.client.request(query, variables);
-        
+ 
         if ( data ['marketplace_data_source_detail'] !== undefined && 
              data['marketplace_data_source_detail'].length > 0 ) {
             let datasetInfo = data ['marketplace_data_source_detail'][0];
@@ -291,9 +307,10 @@ export class SchemaService {
             // console.log (userId);
             // userID == 0 is the special case for returning dataset right after saved
             if (userId != 0 && userId != datasetInfo.dataset_owner_id) {
-                delete datasetInfo["api_key"];
-                delete datasetInfo["enc_data_key"];
-                //delete datasetInfo["dataset_owner_id"];
+                    delete datasetInfo["api_key"];
+                    delete datasetInfo["enc_data_key"];
+                    delete datasetInfo["enc_sample_key"];
+                    //delete datasetInfo["dataset_owner_id"];
             }
             // console.log(datasetInfo);
             return datasetInfo;
@@ -309,9 +326,8 @@ export class SchemaService {
   		        type
             }
         }`
-
         let data = await this.client.request(query);
-        console.log(data);
+        // console.log(data);
         if ( data ['marketplace_field'] !== undefined ) {
             let typeInfo = data ['marketplace_field'];
             return typeInfo;

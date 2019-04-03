@@ -3,7 +3,6 @@ import {GraphQLClient} from 'graphql-request';
 let fuzz = require('fuzzball');
 export class MarketplaceService {
     client: GraphQLClient;
-
     constructor() {
         this.client = Db.getInstance().client;
     }
@@ -16,6 +15,7 @@ export class MarketplaceService {
                 description,
                 delivery_method,
                 access_url,
+                sample_access_url,
                 num_of_records,
                 search_terms,
                 parameters,
@@ -30,7 +30,7 @@ export class MarketplaceService {
                 date_modified
             }
         }`
-
+    
         let data = await this.client.request(query);
    
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
@@ -112,6 +112,7 @@ export class MarketplaceService {
           description,
           delivery_method,
           access_url,
+          sample_access_url,
           num_of_records,
           search_terms,
           parameters,
@@ -130,8 +131,8 @@ export class MarketplaceService {
           objects: hitList
         }
       console.log(hitList);
-
       data = await this.client.request(query,variables);
+      
       if (data['marketplace_data_source_detail'] !== undefined ) {
           return data['marketplace_data_source_detail'];
       } else {
@@ -148,6 +149,7 @@ export class MarketplaceService {
                description,
                delivery_method,
                access_url,
+               sample_access_url,
                num_of_records,
                search_terms,
                parameters,
@@ -167,7 +169,7 @@ export class MarketplaceService {
             id
         }
         let data = await this.client.request(query, variables);
-        
+
         if ( data ['marketplace_data_source_detail'] !== undefined ) {
             return data ['marketplace_data_source_detail'][0];
         } else {
