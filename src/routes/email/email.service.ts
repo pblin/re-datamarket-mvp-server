@@ -1,7 +1,8 @@
 import * as express from 'express';
 import {Db} from '../../db/Db';
 import {GraphQLClient} from 'graphql-request';
-import  { SchemaService } from '../schema/schema.service';
+import { SchemaService } from '../schema/schema.service';
+import { ProfileService } from '../profile/profile.service';
 
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN, SMTP_HOST, SMTP_PORT } from '../../config/ConfigEnv';
 
@@ -25,6 +26,7 @@ router.post('/:address', async (req, res) => {
   const emailTo = req.params.address;
   const supportEmail = 'support@rebloc.io';
   let dsId = req.body.dataset_id;
+  let dsName = req.body.dataset_name;
   let emailHTML = `<h3> Hi! ${req.params.address}</3><br\>`;
   if ( req.body.type == 's' || req.body.type == 'd') {
         const schemaService= new SchemaService();
@@ -38,7 +40,7 @@ router.post('/:address', async (req, res) => {
         if (req.body.type == 's') { // sample data
             const {sample_access_url, enc_sample_key} = datasetDetail;
 
-            let emailDataSample = `<h4> Download and descrypt sample data for dataset ${dsId} instruction </h4>
+            let emailDataSample = `<h4> Download and descrypt sample data for dataset id:"${dsId}" name:"${dsName}" instruction </h4>
             <p>
             1. Download sample file from IPFS ${sample_access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
             2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key [ ${enc_sample_key} ]
@@ -50,10 +52,10 @@ router.post('/:address', async (req, res) => {
             emailHTML += emailDataSample; 
         } else {
             const {id, access_url, enc_data_key} = datasetDetail;
-            let emailData = `<h4> Download and descrypt sample data for dataset ${dsId} instruction </h4>
+            let emailData = `<h4> Download and descrypt sample data for dataset id:"${dsId}" name:"${dsName}" instruction </h4>
                             <p>
                             1. Download sample file from IPFS ${access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
-                            2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key [ ${enc_data_key} ]
+                            2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key "${enc_data_key}" ]
                             <br/><br/> 
                             3. Unzip the decryped file
                             </p>
@@ -63,7 +65,7 @@ router.post('/:address', async (req, res) => {
         }
     } else {
         let txnEmail = `<p>  
-                        Here is the receipt of dataset ${dsId} for ${req.body.price} USD <br/>
+                        Here is the receipt of dataset id:"${dsId}" name:"${dsName}" for ${req.body.price} USD <br/>
                         <br/>
                         Contact ${emailTo} or ${supportEmail} if you have questions. Have a nice day!.
                         </p>`
@@ -89,6 +91,74 @@ router.post('/:address', async (req, res) => {
     to: req.params.address, // list of receivers
     subject: req.body.subject, // Subject line
     html: emailHTML // html body
+  };
+
+  // send mail with defined transport object
+  let info = null;
+  try { 
+    info = await transporter.sendMail(mailOptions)
+  } 
+  catch (err) {
+      console.log (err);
+      res.status(500).send("eamil server error");
+  }
+  if (info != null) {
+    console.log("Message sent: %s", info.messageId);
+    res.sendStatus(200);
+  } else {
+      res.status(404).send("email not sent");
+  }
+
+});
+
+router.post('/:address/send/:ownerid', async (req, res) => {
+  console.log(JSON.stringify(req.body));
+  let result = await vault.read('secret/email');
+  // console.log(result.data);
+
+  if (result == null || result['data'] == null || result['data'] === undefined) {
+    res.sendStatus(500).json({ result, "message":"email credential error"});
+  }
+  const emailFrom = req.params.address;
+  let receiverProfile;
+  let profileService = new ProfileService();
+  try { 
+    receiverProfile = await profileService.getProfileWithId(req.params.ownerid);
+  }
+  catch (err) {
+    console.log(err);
+    res.status(500).send("Receiver profile query error.")
+  }
+  if (receiverProfile['marketplace_customer'].length == 0)
+    res.status(404).send('Receiver not found.');
+  
+  const { first_name, last_name, primary_email } = receiverProfile['marketplace_customer'][0];
+  console.log(receiverProfile);
+  let dsName = req.body.dataset_name;
+  let dsId = req.body.dataset_id;
+
+  let emailText = `Hi! ${first_name} ${last_name}:\n` +
+                  `you have an message from ${emailFrom} about dataset "${dsId}" name:"${dsName}":\n` + 
+                  req.body.message;
+  
+  let transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    tls: true,
+    auth: {
+      user: "support@rebloc.io", // generated ethereal user
+      pass: result.data['pass']// generated ethereal password
+    }
+  });
+  console.log (emailText);
+
+  // setup email data with unicode symbols
+  let mailOptions = {
+    from: "support@rebloc.io", // sender address
+    cc: emailFrom,
+    to: primary_email, // list of receivers
+    subject: req.body.subject, // Subject line
+    text: emailText // html body
   };
 
   // send mail with defined transport object
