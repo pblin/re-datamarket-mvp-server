@@ -135,8 +135,10 @@ router.post('/:address/send/:ownerid', async (req, res) => {
   const { first_name, last_name, primary_email } = receiverProfile['marketplace_customer'][0];
   console.log(receiverProfile);
   let dsName = req.body.dataset_name;
+  let dsId = req.body.dataset_id;
+
   let emailText = `Hi! ${first_name} ${last_name}:\n` +
-                  `you have an message from ${emailFrom} about "${dsName}":\n` + 
+                  `you have an message from ${emailFrom} about dataset "${dsId}" name:"${dsName}":\n` + 
                   req.body.message;
   
   let transporter = nodemailer.createTransport({
