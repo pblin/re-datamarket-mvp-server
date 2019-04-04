@@ -47,11 +47,7 @@ export class SchemaService {
             objects: []
             }; 
         
-        let obj = {}
-        if  (ds['json_schema'] != null) {
-            let schema = JSON.parse(ds['json_schema']);
-            obj['table_name'] = schema.schema_name;
-        }
+        let obj = {};
         for (const key of Object.keys(ds)) {
             if (ds[key] != null) {
                 obj[key] = ds[key]
@@ -92,7 +88,7 @@ export class SchemaService {
         let variables = {
             objects: []
         };
-        let schemaItems = schema.fields;
+        let schemaItems = schema;
     
         for (var i = 0; i < schemaItems.length; i++) {
             if (schemaItems[i].label === undefined) {

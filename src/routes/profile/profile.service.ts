@@ -30,6 +30,28 @@ export class ProfileService {
         return result;
     }
 
+    async getProfileWithId(id: number) {
+        const query = `query customer ($id: Int) {
+          marketplace_customer (where:{id :{ _eq : $id}})
+          {
+              id
+              primary_email
+              secondary_email
+              first_name
+              last_name
+              phone
+              address
+              is_org_admin
+          }
+        }`;
+
+        const variables = {
+             id
+        };
+
+        let result = await this.client.request (query, variables);
+        return result;
+    }
     async createProfile(profile: any) {
         const query = `
             mutation insert_marketplace_customer ($objects:[marketplace_customer_insert_input!]!)
