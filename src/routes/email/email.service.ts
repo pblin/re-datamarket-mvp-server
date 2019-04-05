@@ -129,8 +129,13 @@ router.post('/:address/send/:ownerid', async (req, res) => {
     console.log(err);
     res.status(500).send("Receiver profile query error.")
   }
-  if (receiverProfile['marketplace_customer'].length == 0)
-    res.status(404).send('Receiver not found.');
+
+  if ( receiverProfile['marketplace_customer'] == undefined || 
+       receiverProfile['marketplace_customer'].length == 0 || 
+       receiverProfile['marketplace_customer'][0] == null )
+       {
+          res.status(404).send('Receiver not found.');
+       }
   
   const { first_name, last_name, primary_email } = receiverProfile['marketplace_customer'][0];
   console.log(receiverProfile);
