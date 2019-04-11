@@ -40,7 +40,7 @@ export class SchemaService {
             ] 
             }
             ) {
-            affected_rows
+                affected_rows
             }
         }`;
         let variables = {
@@ -57,7 +57,7 @@ export class SchemaService {
         console.log(variables);
     
         let data = await this.client.request(mut, variables);
-        
+        console.log(data)
         if (data !== undefined) {
             return data['insert_marketplace_data_source_detail'].affected_rows;
         } else return -1; 

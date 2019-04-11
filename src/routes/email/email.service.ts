@@ -38,26 +38,26 @@ router.post('/:address', async (req, res) => {
             console.log (err);
         }
         if (req.body.type == 's') { // sample data
-            const {sample_access_url, enc_sample_key} = datasetDetail;
+            const {sample_access_url, enc_sample_key, sample_hash} = datasetDetail;
 
             let emailDataSample = `<h4> Download and descrypt sample data for dataset id:"${dsId}" name:"${dsName}" instruction </h4>
             <p>
-            1. Download sample file from IPFS ${sample_access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
-            2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key [ ${enc_sample_key} ]
+            1. Download sample file from IPFS ${access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
+            2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key [ ${enc_data_key} ]
             <br/><br/> 
-            3. Unzip the decryped file
+            3. Unzip the decryped file, MD5 hash of the zip: ${data_hash}
             </p>
             <br/>
             Contact ${emailTo} or ${supportEmail} if you have questions. Have a nice day!`
             emailHTML += emailDataSample; 
         } else {
-            const {id, access_url, enc_data_key} = datasetDetail;
+            const {id, access_url, enc_data_key, sample_hash} = datasetDetail;
             let emailData = `<h4> Download and descrypt sample data for dataset id:"${dsId}" name:"${dsName}" instruction </h4>
                             <p>
-                            1. Download sample file from IPFS ${access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
-                            2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key "${enc_data_key}" ]
-                            <br/><br/> 
-                            3. Unzip the decryped file
+                            1. Download sample file from IPFS ${sample_access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
+                            2. Decrypt file (sample code at https://gist.github.com/pblin/2b476b016c04371d7b680c8e8dd31d0d with  data key [ "${enc_sample_key}" ]
+                            <br/><br/>
+                            3. Unzip the decryped file, MD5 hash of the zip: ${sample_hash}
                             </p>
                             <br/>
                             Contact ${emailTo} or ${supportEmail} if you have questions. Have a nice day!`
