@@ -38,7 +38,7 @@ router.post('/:address', async (req, res) => {
             console.log (err);
         }
         if (req.body.type == 's') { // sample data
-            const {sample_access_url, enc_sample_key, sample_hash} = datasetDetail;
+            const {access_url,enc_data_key, data_hash} = datasetDetail;
 
             let emailDataSample = `<h4> Download and descrypt sample data for dataset id:"${dsId}" name:"${dsName}" instruction </h4>
             <p>
@@ -51,7 +51,7 @@ router.post('/:address', async (req, res) => {
             Contact ${emailTo} or ${supportEmail} if you have questions. Have a nice day!`
             emailHTML += emailDataSample; 
         } else {
-            const {id, access_url, enc_data_key, sample_hash} = datasetDetail;
+            const {sample_access_url, enc_sample_key, sample_hash} = datasetDetail;
             let emailData = `<h4> Download and descrypt sample data for dataset id:"${dsId}" name:"${dsName}" instruction </h4>
                             <p>
                             1. Download sample file from IPFS ${sample_access_url}  (from any gateway using filed_hash, http://ipfs_gateway/ipfs/file_hash) <br/><br/>
