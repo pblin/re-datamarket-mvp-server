@@ -2,13 +2,7 @@ FROM node:10.15.3-alpine
 
 WORKDIR /app
 
-COPY *.json /app/
-COPY *.pem /app/
-COPY *.pfx /app/
-COPY .env /app/
-
-COPY ./src  /app/src
-
+COPY . /app
 RUN yarn
 
 ENTRYPOINT  ["yarn"]
