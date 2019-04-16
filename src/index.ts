@@ -34,10 +34,10 @@ app.use('/emailer', EmailService);
  
 if (HTTPS_ON == 'YES') { 
     const credentials = {
-        key: fs.readFileSync(SSL_KEY),
-        cert: fs.readFileSync(SSL_PEM),
-        // pfx: fs.readFileSync(SSL_PFX),
-        // passphrase: KEY_PASS
+        // key: fs.readFileSync(SSL_KEY),
+        // cert: fs.readFileSync(SSL_PEM),
+        pfx: fs.readFileSync(SSL_PFX),
+        passphrase: KEY_PASS
       };
     let httpsServer = https.createServer(credentials, app);
     httpsServer.listen(9000);
