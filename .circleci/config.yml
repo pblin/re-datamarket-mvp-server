@@ -27,14 +27,15 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.dev .env
-            scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/*.pem .
-            docker build -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
+            scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.prod .env
+            scp mvp@demo-app.rebloc.io:/home/tls/* .
+            docker build --rm -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
             docker login -u $DOCKER_LOGIN --password $DOCKER_PWD 
             docker push bernardlin/apiserver:beta
       - run:
           name: start up docker
           command: |
+            rsh mvp@demo-app.rebloc.io "docker system prune -f "
             rsh  mvp@demo-app.rebloc.io "if [ ! -d 'webapp/server/' ]; then mkdir -p webapp/server/; fi"
             scp ./run_api_server.sh mvp@demo-app.rebloc.io:/home/mvp/webapp/server/
             rsh mvp@demo-app.rebloc.io "docker pull bernardlin/apiserver:beta && bash /home/mvp/webapp/server/run_api_server.sh bernardlin/apiserver:beta"
