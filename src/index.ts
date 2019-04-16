@@ -9,7 +9,7 @@ import EmailService from './routes/email/email.service';
 import FiatService from './routes/stripe/stripe.service';
 const app = express();
 const methodOverride = require('method-override');
-import { HTTPS_ON, KEY_PASS, SSL_PEM, SSL_KEY } from './config/ConfigEnv';
+import { HTTPS_ON, KEY_PASS, SSL_PEM, SSL_KEY, SSL_PFX } from './config/ConfigEnv';
 import * as https from 'https';
 import * as http from 'http';
 import * as fs from 'fs';
@@ -34,8 +34,9 @@ app.use('/emailer', EmailService);
  
 if (HTTPS_ON == 'YES') { 
     const credentials = {
-        key: fs.readFileSync(SSL_KEY),
-        cert: fs.readFileSync(SSL_PEM),
+        // key: fs.readFileSync(SSL_KEY),
+        // cert: fs.readFileSync(SSL_PEM),
+        pfx: fs.readFileSync(SSL_PFX),
         passphrase: KEY_PASS
       };
     let httpsServer = https.createServer(credentials, app);
