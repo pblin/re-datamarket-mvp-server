@@ -143,7 +143,7 @@ router.post('/:address/send/:ownerid', async (req, res) => {
   let dsId = req.body.dataset_id;
 
   let emailText = `Hi! ${first_name} ${last_name}:\n` +
-                  `you have an message from ${emailFrom} about dataset "${dsId}" name:"${dsName}":\n` + 
+                  `you have a message from ${emailFrom} about dataset "${dsId}" name:"${dsName}":\n` + 
                   req.body.message;
   
   let transporter = nodemailer.createTransport({
