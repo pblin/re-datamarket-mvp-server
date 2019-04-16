@@ -39,8 +39,8 @@ if (HTTPS_ON == 'YES') {
         passphrase: KEY_PASS
       };
     let httpsServer = https.createServer(credentials, app);
-    httpsServer.listen(9001);
-    console.log(`API on https port 9001.`);
+    httpsServer.listen(9000);
+    console.log(`API on https port 9000.`);
 
   } else { 
     let httpServer = http.createServer(app);
