@@ -21,6 +21,7 @@ export const VAULT_SERVER = process.env.VAULT_SERVER;
 export const VAULT_CLIENT_TOKEN = process.env.VAULT_TOKEN;
 export const SSL_PEM = process.env.SSL_PEM;
 export const SSL_KEY = process.env.SSL_KEY;
+export const SSL_PFX = process.env.SSL_PFX;
 export const KEY_PASS = process.env.KEY_PASS;
 export const HTTPS_ON = process.env.HTTPS_ON;
 export const SMTP_HOST = process.env.SMTP_HOST;
