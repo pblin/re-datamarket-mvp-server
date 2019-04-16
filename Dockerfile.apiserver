@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY *.json /app/
 COPY *.pem /app/
+COPY *.pfx /app/
 COPY .env /app/
 
 COPY ./src  /app/src
