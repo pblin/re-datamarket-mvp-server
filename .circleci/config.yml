@@ -28,7 +28,7 @@ jobs:
           name: Build and push Docker image
           command: |
             scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.prod .env
-            scp mvp@demo-app.rebloc.io:/home/tls/* .
+            scp mvp@demo-app.rebloc.io:/home/mvp/tls/* .
             docker build --rm -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
             docker login -u $DOCKER_LOGIN --password $DOCKER_PWD 
             docker push bernardlin/apiserver:beta
