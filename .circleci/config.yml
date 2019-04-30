@@ -14,8 +14,8 @@ jobs:
       - run:
           name: run yarn
           command: |
-            cd api-server && yarn 
-            cd order-processor && yarn
+            cd ~/app/api-server && yarn 
+            cd ~/app/order-processor && yarn
  
   deploy:
     machine: 
@@ -28,11 +28,13 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
+            pwd
             scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.prod api-server/.env
+            scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.prod order-processor/.env
             scp mvp@demo-app.rebloc.io:/home/mvp/tls/* api-server/
-            cd api-server && docker build --rm -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
-            cd order-processor && docker build --rm -t bernardlin/orderprocessor:beta -f Dockerfile.orderprocessor .
-            docker login -u $DOCKER_LOGIN --password $DOCKER_PWD 
+            cd  api-server && docker build --rm -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
+            cd ../order-processor && docker build --rm -t bernardlin/orderprocessor:beta -f Dockerfile.orderprocessor .
+            docker login -u $DOCKER_LOGIN -p $DOCKER_PWD 
             docker push bernardlin/apiserver:beta
             docker push bernardlin/orderprocessor:beta
       - run:
@@ -42,7 +44,7 @@ jobs:
             scp api-server/run_api_server.sh mvp@demo-app.rebloc.io:/home/mvp/webapp/server/
             scp order-processor/run_order_processor.sh mvp@demo-app.rebloc.io:/home/mvp/webapp/server/
             rsh mvp@demo-app.rebloc.io "docker pull bernardlin/apiserver:beta && bash /home/mvp/webapp/server/run_api_server.sh bernardlin/apiserver:beta"
-            rsh mvp@demo-app.rebloc.io "docker pull bernardlin/orderprocessor:beta && bash /home/mvp/webapp/server/run_order_prcessor.sh bernardlin/orderprocessor:beta"
+            rsh mvp@demo-app.rebloc.io "docker pull bernardlin/orderprocessor:beta && bash /home/mvp/webapp/server/run_order_processor.sh bernardlin/orderprocessor:beta"
             rsh mvp@demo-app.rebloc.io "docker system prune -f "
 workflows:
   version: 2
