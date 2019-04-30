@@ -44,7 +44,7 @@ jobs:
             scp api-server/run_api_server.sh mvp@demo-app.rebloc.io:/home/mvp/webapp/server/
             scp order-processor/run_order_processor.sh mvp@demo-app.rebloc.io:/home/mvp/webapp/server/
             rsh mvp@demo-app.rebloc.io "docker pull bernardlin/apiserver:beta && bash /home/mvp/webapp/server/run_api_server.sh bernardlin/apiserver:beta"
-            rsh mvp@demo-app.rebloc.io "docker pull bernardlin/orderprocessor:beta && bash /home/mvp/webapp/server/run_order_prcessor.sh bernardlin/orderprocessor:beta"
+            rsh mvp@demo-app.rebloc.io "docker pull bernardlin/orderprocessor:beta && bash /home/mvp/webapp/server/run_order_processor.sh bernardlin/orderprocessor:beta"
             rsh mvp@demo-app.rebloc.io "docker system prune -f "
 workflows:
   version: 2
