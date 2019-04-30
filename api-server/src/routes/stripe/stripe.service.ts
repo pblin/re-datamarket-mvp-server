@@ -1,0 +1,103 @@
+import * as express from 'express';
+import * as Stripe from 'stripe';
+import * as multer from 'multer';
+import * as uuidv4 from 'uuid/v4';
+import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
+const router = express.Router();
+const upload = multer();
+
+const options = {
+  apiVersion: 'v1', // default
+  endpoint: VAULT_SERVER, // default
+  token:  VAULT_CLIENT_TOKEN // optional client token; 
+};
+const vault = require("node-vault")(options);
+router.post('/charge/:userid', upload.none(), async (req, res) => {
+  console.log(JSON.stringify(req.body));
+  if (req.params.userid === undefined) 
+    res.sendStatus(404).send("user id needed");
+
+  let stripe; 
+  let result;
+  try { 
+    result = await vault.read('secret/stripe');
+  } 
+  catch (err) {
+    console.log(err);
+    res.status(500).send("secret vault connection problem");
+  }
+  // console.log(result.data);
+  if (result == null || result['data'] == null || result['data'] === undefined) {
+      res.status(500).json({ result, "message":"Payment credential error"});
+  }
+
+  stripe = new Stripe(result.data['skey']);
+  let error;
+  let status = 'failed';
+  let code = 200;
+  try {
+    const {
+      product,
+      amount,
+      csrfToken,
+      currency = 'usd',
+      description,
+      stripeBillingAddressCity,
+      stripeBillingAddressCountry,
+      stripeBillingAddressLine1,
+      stripeBillingAddressState,
+      stripeBillingAddressZip,
+      stripeBillingName,
+      stripeEmail,
+      stripeShippingAddressCity,
+      stripeShippingAddressCountry,
+      stripeShippingAddressLine1,
+      stripeShippingAddressState,
+      stripeShippingAddressZip,
+      stripeShippingName,
+      stripeToken,
+      stripeTokenType,
+    } = req.body;
+
+    console.log("amount=" + amount)
+
+    if (stripeTokenType === 'card') {
+      const idempotency_key = uuidv4();
+      const charge = await stripe.charges.create(
+        {
+          amount: amount,
+          currency: currency,
+          description: description,
+          receipt_email: stripeEmail,
+          source: stripeToken,
+          statement_descriptor: 'Rebloc marketplace',
+          metadata: {
+            customerId: req.params.userid,
+            productId: product
+          }
+        },
+        {
+          idempotency_key,
+        }
+      );
+      console.log('charge:');
+      console.log(JSON.stringify(charge));
+    } else {
+      throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
+    }
+    
+    status = 'success';
+    code = 200;
+    console.log(status);
+
+  } catch (err) {
+      console.error(err);
+      error = err;
+      code = 500;
+      console.log(err);
+  }
+
+  res.json({ error, status });
+});
+
+export default router;
