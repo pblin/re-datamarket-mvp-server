@@ -108,8 +108,9 @@ export class MarketplaceDB {
           objects: []
         }; 
         variables.objects.push(order);
-        // console.log(variables);
+        // console.log(mut);
+        console.log(variables);
         let data = await this.client.request(mut, variables);
-        return (data['order_book']);
+        return (data['insert_marketplace_order_book'].affected_rows);
     }
 }
