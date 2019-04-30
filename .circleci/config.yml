@@ -14,8 +14,8 @@ jobs:
       - run:
           name: run yarn
           command: |
-            cd api-server && yarn 
-            cd order-processor && yarn
+            cd ~/app/api-server && yarn 
+            cd ~/app/order-processor && yarn
  
   deploy:
     machine: 
