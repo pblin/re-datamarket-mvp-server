@@ -8,11 +8,9 @@ const options = {
     token:  VAULT_CLIENT_TOKEN // optional client token; 
   };
 
-
 // const vault = require('node-vault')(options);
 const vault = require ('node-vault')(options);
 export class OrderProcessor {
-  
     queue: Queue;
     async connectToJobQueue() {
         let result;
@@ -77,7 +75,7 @@ export class OrderProcessor {
                 if ( datasetInfo != null) {
                     let order:OrderDetail = {
                         ...job.data,
-                        data_description: datasetInfo['description'],
+                        dataset_description: datasetInfo['description'],
                         seller_id: datasetInfo['dataset_owner_id']
                     };
                     let url = datasetInfo['access_url'];
@@ -87,7 +85,7 @@ export class OrderProcessor {
                         order['data_loc_hash'] = parts.pop() || parts.pop();
                     }
                     let result = await marketplaceDB.saveOrder(order);
-                    // console.log(result);
+                    console.log(result);
                 }
             });
         }
