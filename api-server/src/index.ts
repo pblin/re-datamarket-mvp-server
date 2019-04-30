@@ -54,6 +54,7 @@ if (HTTPS_ON == 'YES') {
   } else { 
     let httpServer = http.createServer(app);
     httpServer.listen(9000);
+    console.log (SSL_PFX);
     console.log(`API on http port 9000.`);
 }
 
