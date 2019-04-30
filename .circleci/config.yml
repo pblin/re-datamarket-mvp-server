@@ -32,7 +32,7 @@ jobs:
             scp mvp@demo-app.rebloc.io:/home/mvp/tls/* api-server/
             cd api-server && docker build --rm -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
             cd order-processor && docker build --rm -t bernardlin/orderprocessor:beta -f Dockerfile.orderprocessor .
-            docker login -u $DOCKER_LOGIN --password $DOCKER_PWD 
+            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin $DOCKER_PWD 
             docker push bernardlin/apiserver:beta
             docker push bernardlin/orderprocessor:beta
       - run:
