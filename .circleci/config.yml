@@ -28,12 +28,12 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            ls
+            pwd
             scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.prod api-server/.env
             scp mvp@demo-app.rebloc.io:/var/local/democonfig/server/.env.prod order-processor/.env
             scp mvp@demo-app.rebloc.io:/home/mvp/tls/* api-server/
             cd  api-server && docker build --rm -t bernardlin/apiserver:beta -f Dockerfile.apiserver .
-            cd ~/order-processor && docker build --rm -t bernardlin/orderprocessor:beta -f Dockerfile.orderprocessor .
+            cd ../order-processor && docker build --rm -t bernardlin/orderprocessor:beta -f Dockerfile.orderprocessor .
             docker login -u $DOCKER_LOGIN --p $DOCKER_PWD 
             docker push bernardlin/apiserver:beta
             docker push bernardlin/orderprocessor:beta
