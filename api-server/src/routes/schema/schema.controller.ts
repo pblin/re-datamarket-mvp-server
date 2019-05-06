@@ -116,15 +116,15 @@ router.get('/types', (req, res, next) => {
 });
 
 router.get('/dataset/sample/:assetid', (req, res, next) => {
-  console.log ('sampel for dataset: ' + req.params.assetid);
+  console.log ('sample for dataset: ' + req.params.assetid);
   return schemaService.previewSample(req.params.assetid).then(datasets => {
     if( datasets == null ) {
         return res.status(404).send("no sample found");
     } else {
         return res.status(200).send(datasets)
     }
-  }).catch(() => {
-      return res.status(500).send("sample retrieval error."); //TODO: Introduce better error handling
+  }).catch((err) => {
+      return res.status(500).send("sample retrieval error. "  + err ); //TODO: Introduce better error handling
   })
 });
 

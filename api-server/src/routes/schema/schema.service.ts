@@ -1,7 +1,7 @@
 import {Db} from '../../db/Db';
 import {DATA_HOST_URL} from '../../config/ConfigEnv';
 import {GraphQLClient} from 'graphql-request';
-const fetch = require('node-fetch');
+const fetch = require('request-promise');
 
 const dsCols = 
 "id \
@@ -277,9 +277,15 @@ export class SchemaService {
         let file_hash = parts.pop() || parts.pop();
         const url = DATA_HOST_URL + '/' + datasetInfo['enc_sample_key'] + '/' + file_hash;
         console.log(url);
-        let response = await fetch(url);
-        let json = await response.json();
-        console.log(JSON.stringify(json));
-        return json;
+        const options ={
+            uri: url,
+            method: 'GET',
+            rejectUnauthorized: false
+        };
+
+        let response = await fetch(options);
+        console.log(response);
+        console.log(JSON.stringify(response));
+        return response;
     }
 }
