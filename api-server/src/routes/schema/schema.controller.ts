@@ -84,7 +84,7 @@ router.get('/user/:userid', (req, res, next) => {
 
 router.get('/dataset/:assetid', (req, res, next) => {
   console.log (req.params.assetid);
-  let userId=-100; //default value
+  let userId=0; //default value
 
   if (req.query.userid !== undefined) {
     userId=req.query.userid;
@@ -114,6 +114,20 @@ router.get('/types', (req, res, next) => {
     return res.status(500).send("unknown server error."); //TODO: Introduce better error handling
 })
 });
+
+router.get('/dataset/sample/:assetid', (req, res, next) => {
+  console.log ('sampel for dataset: ' + req.params.assetid);
+  return schemaService.previewSample(req.params.assetid).then(datasets => {
+    if( datasets == null ) {
+        return res.status(404).send("no sample found");
+    } else {
+        return res.status(200).send(datasets)
+    }
+  }).catch(() => {
+      return res.status(500).send("sample retrieval error."); //TODO: Introduce better error handling
+  })
+});
+
 router.delete('/dataset/:assetid', (req, res, netxt) => {
     console.log (req.params.assetid);
     if (req.params.assetid === undefined) {

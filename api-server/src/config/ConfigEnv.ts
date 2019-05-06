@@ -30,5 +30,4 @@ export const SMTP_HOST = process.env.SMTP_HOST;
 export const SMTP_PORT = process.env.SMTP_PORT;
 export const REDIS_PORT = process.env.REDIS_PORT;
 export const REDIS_HOST = process.env.REDIS_HOST;
-
-
+export const DATA_HOST_URL = process.env.DATA_HOST_URL
