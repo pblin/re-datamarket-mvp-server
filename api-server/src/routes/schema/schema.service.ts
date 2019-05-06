@@ -1,5 +1,7 @@
 import {Db} from '../../db/Db';
+import {DATA_HOST_URL} from '../../config/ConfigEnv';
 import {GraphQLClient} from 'graphql-request';
+const fetch = require('node-fetch');
 
 const dsCols = 
 "id \
@@ -243,7 +245,7 @@ export class SchemaService {
             if (user_id != 0 && user_id != datasetInfo.dataset_owner_id) {
                     delete datasetInfo["api_key"];
                     delete datasetInfo["enc_data_key"];
-                    delete datasetInfo["enc_sample_key"];
+                    //delete datasetInfo["enc_sample_key"];
                     //delete datasetInfo["dataset_owner_id"];
             }
             // console.log(datasetInfo);
@@ -267,5 +269,17 @@ export class SchemaService {
         } else {
             return null; 
         }
+    }
+
+    async previewSample(id: string) {
+        let datasetInfo = await this.getAdataset(id, 0);
+        let parts = datasetInfo['sample_access_url'].split('/'); 
+        let file_hash = parts.pop() || parts.pop();
+        const url = DATA_HOST_URL + '/' + datasetInfo['enc_sample_key'] + '/' + file_hash;
+        console.log(url);
+        let response = await fetch(url);
+        let json = await response.json();
+        console.log(JSON.stringify(json));
+        return json;
     }
 }
