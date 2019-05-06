@@ -34,7 +34,10 @@ export class ProfileService {
         };
 
         let result = await this.client.request (query, variables);
-        return result;
+        if (result != null && result['marketplace_customer'] != null) 
+            return result['marketplace_customer'][0];
+        else 
+            return null;
     }
 
     async getProfileWithId(id: number) {
@@ -80,9 +83,65 @@ export class ProfileService {
         const variables = {
             objects: []
         };
+
         variables.objects.push(profile);
         console.log(variables);
         let result = await this.client.request (query, variables);
-        return result;
+        if (result != null && result['insert_marketplace_customer'] != null)
+            return result['insert_marketplace_customer'].returning[0];
+        else 
+            return null;
+    }
+
+    async getVerificationInfo(user_id:string) {
+        const query = `
+            query profile_verified ($user_id: Int) {
+                marketplace_verified_profile ( where: {user_id: {_eq: $user_id }} )
+                {
+                user_id
+                code
+                expired_at
+                }
+            }`;
+
+        const variables = {
+                user_id
+           };
+   
+        let result = await this.client.request (query, variables);
+        // console.log(result);
+        if (result != null && result['marketplace_verified_profile'] != null) 
+            return result['marketplace_verified_profile'][0];
+         else 
+            return null;
+    }
+    async insertVerificationInfo(verified_info: any) {
+        console.log (verified_info);
+        const mut = `
+            mutation insert_marketplace_verified_profile 
+                    ($objects:[marketplace_verified_profile_insert_input!]!)
+                {
+                    insert_marketplace_verified_profile ( 
+                        objects:$objects
+                    ) {
+                        returning {
+                            user_id
+                            code
+                            expired_at
+                        }
+                    }
+                }`;
+
+        const variables = {
+            objects: []
+        };
+        // console.log(mut);
+        variables.objects.push(verified_info);
+        // console.log(variables);
+        let result = await this.client.request (mut, variables);
+        if (result != null && result['insert_marketplace_verified_profile'] != null) 
+            return result['insert_marketplace_verified_profile'].returning[0];
+        else 
+            return null;
     }
 }
