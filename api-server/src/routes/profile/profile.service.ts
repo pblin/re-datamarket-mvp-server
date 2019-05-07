@@ -1,5 +1,9 @@
 import {Db} from "../../db/Db";
 import {GraphQLClient} from "graphql-request";
+import { EmailService } from '../email/email.service';
+import { url } from "inspector";
+const uuid = require("uuid");
+const crypto = require("crypto");
 
 const profileCols = 
 "id \
@@ -13,7 +17,10 @@ roles \
 wallet_address_1 \
 wallet_address_2 \
 is_org_admin \
-email_verified ";
+verification_code \
+verification_code_expiry \
+primary_email_verified \
+secondary_email_verified ";
 
 export class ProfileService {
     client: GraphQLClient;
@@ -32,12 +39,26 @@ export class ProfileService {
         const variables = {
              email
         };
+        let result = {
+                code: 0,
+                data: null
+        };
+        let data;
+        try { 
+            data = await this.client.request (query, variables);
+        } catch (err) {
+            console.log(err); 
+            result.code = -1;
+            return result;
+        }
 
-        let result = await this.client.request (query, variables);
-        if (result != null && result['marketplace_customer'] != null) 
-            return result['marketplace_customer'][0];
-        else 
-            return null;
+        if (data != null && data['marketplace_customer'] != null) {
+            result.code = 1;
+            result.data = data['marketplace_customer'][0];
+        } else {
+            result.code = 0;
+        }
+        return result;
     }
 
     async getProfileWithId(id: number) {
@@ -55,7 +76,47 @@ export class ProfileService {
         let result = await this.client.request (query, variables);
         return result;
     }
+
+    async sendVerification(email: string, confirmationText: string) {
+            const emailService = new EmailService();
+            // console.log(email);
+            try { 
+                let info = await emailService.sendmail(
+                                    "support@rebloc.io",
+                                    email,
+                                    "support@rebloc.io",
+                                    "Confirm your email address",
+                                    confirmationText);
+            } catch (err) {
+                console.log (err);
+            }
+        }
     async upsertProfile(profile: any) {
+
+        // first time registration?
+        const primaryEmail = profile['primary_email'];
+        let existing = await this.getProfile (primaryEmail);
+        if ( (existing.code > 0 && existing.data == null)  || 
+             !profile['primary_email_verified'])  { //no profile exists or primary email not verified
+
+            let today = new Date();
+            profile['verification_code_expiry'] = today.getTime() + 86400000; // 24 hours from now
+            let hash = crypto.createHash('sha256').update(uuid()).digest("base64");
+            profile['verification_code'] = hash;
+            console.log(hash);
+            let confirmLink = encodeURIComponent(`http://demo-app.rebloc.io:3000/VerificationPage?email=${primaryEmail}&code=${hash}`);
+            let confirmationText = 
+                `<div>
+                    <div>
+                        <h4>Please verify your email address by clicking the link:</h4>
+                    </div>
+                    <div>
+                        <a href="${confirmLink}"> Verify Email</a>
+                    </div>
+                </div>`
+
+            this.sendVerification(primaryEmail, confirmationText);
+        }
         let str = "";
         for (var key in profile ) {
             console.log(key);
@@ -92,56 +153,19 @@ export class ProfileService {
         else 
             return null;
     }
+    async verifyEmail (email:string, code:string) {
+        let profile = await this.getProfile(email);
 
-    async getVerificationInfo(user_id:string) {
-        const query = `
-            query profile_verified ($user_id: Int) {
-                marketplace_verified_profile ( where: {user_id: {_eq: $user_id }} )
-                {
-                user_id
-                code
-                expired_at
-                }
-            }`;
-
-        const variables = {
-                user_id
-           };
-   
-        let result = await this.client.request (query, variables);
-        // console.log(result);
-        if (result != null && result['marketplace_verified_profile'] != null) 
-            return result['marketplace_verified_profile'][0];
-         else 
-            return null;
+        if (profile != null) {
+            // check verification code
+            const today = new Date().getTime();
+            if (today > profile['verification_code_expiry'])
+                return false; // expired
+            else {
+                return (profile['verification_code'] == code) 
+            }
+        } else 
+            return false;
     }
-    async insertVerificationInfo(verified_info: any) {
-        console.log (verified_info);
-        const mut = `
-            mutation insert_marketplace_verified_profile 
-                    ($objects:[marketplace_verified_profile_insert_input!]!)
-                {
-                    insert_marketplace_verified_profile ( 
-                        objects:$objects
-                    ) {
-                        returning {
-                            user_id
-                            code
-                            expired_at
-                        }
-                    }
-                }`;
 
-        const variables = {
-            objects: []
-        };
-        // console.log(mut);
-        variables.objects.push(verified_info);
-        // console.log(variables);
-        let result = await this.client.request (mut, variables);
-        if (result != null && result['insert_marketplace_verified_profile'] != null) 
-            return result['insert_marketplace_verified_profile'].returning[0];
-        else 
-            return null;
-    }
 }

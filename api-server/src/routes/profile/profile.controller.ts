@@ -6,11 +6,14 @@ const profileService = new ProfileService();
 
 /* GET users listing. */
 router.get('/:email', (req, res, next) => {
-    return profileService.getProfile(req.params.email).then((profile) => {
-            if(profile == null) {
-                return res.sendStatus(404);
-            } else {
-                return res.send(profile);
+    return profileService.getProfile(req.params.email).then((result) => {
+            if(result.code > 0  && result.data != null) 
+                res.send(result.data);
+            else {
+                if (result.code < 0)
+                    res.sendStatus(500);
+                else
+                    res.sendStatus(404);
             }
         }).catch(() => {
             return res.sendStatus(500); //TODO: Introduce better error handling
@@ -18,38 +21,22 @@ router.get('/:email', (req, res, next) => {
 });
 
 router.post('/', (req, res) => {
-    return profileService.upsertProfile(req.body).then((profile) => {
-        if (profile != null) 
-            res.send(profile);
-        else 
-            res.sendStatus(404);
+    return profileService.upsertProfile(req.body).then((result) => {
+            if (result != null) 
+                res.send(result);
+            else 
+                res.sendStatus(404);
         }).catch((err) => {
              return res.sendStatus(500);
          });
 });
 
-router.get('/verification/:user_id', (req, res, next) => {
-    return profileService.getVerificationInfo(req.params.user_id).then((verification) => {
-            if(verification == null) {
-                return res.sendStatus(404);
-            } else {
-                return res.send(verification);
-            }
-        }).catch(() => {
-            return res.sendStatus(500); //TODO: Introduce better error handling
-            });
-});
-router.post('/verification', (req, res) => {
+router.get('/verify', (req, res) => {
     // console.log(req.body);
-    return profileService.insertVerificationInfo(req.body).then((verification) => {
-            if (verification != null) {
-                return res.send(verification);
-            }
-            else {
-                return res.sendStatus(404);
-            }
+    return profileService.verifyEmail(req.query.email, req.query.code).then((verification) => {
+            return res.send(verification);
         }).catch((err) => {
-             return res.sendStatus(500);
+             return res.status(500).send(false);
         });
 });
 
