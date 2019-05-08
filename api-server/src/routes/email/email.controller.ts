@@ -2,7 +2,7 @@ import * as express from 'express';
 import { SchemaService } from '../schema/schema.service';
 import { ProfileService } from '../profile/profile.service';
 import { EmailService } from './email.service';
-import { VAULT_SERVER, VAULT_CLIENT_TOKEN, SMTP_HOST, SMTP_PORT } from '../../config/ConfigEnv';
+// import { VAULT_SERVER, VAULT_CLIENT_TOKEN, SMTP_HOST, SMTP_PORT } from '../../config/ConfigEnv';
 
 const router = express.Router();
 const supportEmail = 'support@rebloc.io';

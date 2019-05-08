@@ -2,7 +2,7 @@ import {Db} from "../../db/Db";
 import {GraphQLClient} from "graphql-request";
 import { EmailService } from '../email/email.service';
 import { url } from "inspector";
-const uuid = require("uuid");
+import * as uuid from "uuid/v4";
 const crypto = require("crypto");
 
 const profileCols = 
@@ -22,6 +22,23 @@ verification_code_expiry \
 primary_email_verified \
 secondary_email_verified ";
 
+export interface ProfileData {
+    id: number,
+    primary_email: string,
+    secondary_emall: string,
+    first_name: string,
+    last_name: string,
+    address: string,
+    phone: string,
+    roles: [string],
+    wallet_address_1: string,
+    wallet_address_2: string,  
+    is_org_admin: boolean, 
+    verification_code: string, 
+    verification_code_expiry:  number,
+    primary_email_verified: boolean,
+    secondary_email_verified:  boolean
+}
 export class ProfileService {
     client: GraphQLClient;
 
@@ -91,7 +108,7 @@ export class ProfileService {
                 console.log (err);
             }
         }
-    async upsertProfile(profile: any) {
+    async upsertProfile(profile: ProfileData) {
 
         // first time registration?
         const primaryEmail = profile['primary_email'];
@@ -154,16 +171,21 @@ export class ProfileService {
             return null;
     }
     async verifyEmail (email:string, code:string) {
-        let profile = await this.getProfile(email);
+        let profile:ProfileData;
+        let result  = await this.getProfile(email);
+        profile = result.data;
+        console.log(profile);
 
         if (profile != null) {
             // check verification code
             const today = new Date().getTime();
-            if (today > profile['verification_code_expiry'])
-                return false; // expired
-            else {
+          
+            if (today <= profile['verification_code_expiry']) {
+                console.log('not expired yet');
                 return (profile['verification_code'] == code) 
             }
+            else 
+                return false;
         } else 
             return false;
     }
