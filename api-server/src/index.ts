@@ -5,7 +5,7 @@ import 'graphql-request';
 import ProfileRouter from './routes/profile/profile.controller';
 import SchemaRouter  from './routes/schema/schema.controller';
 import MarketplaceRouter from './routes/marketplace/marketplace.controller';
-import EmailService from './routes/email/email.service';
+import Emailer from './routes/email/email.controller';
 import FiatService from './routes/stripe/stripe.service';
 const app = express();
 const methodOverride = require('method-override');
@@ -30,7 +30,7 @@ app.use('/profile', ProfileRouter);
 app.use('/schema', SchemaRouter);
 app.use('/marketplace', MarketplaceRouter);
 app.use('/stripe', FiatService);
-app.use('/emailer', EmailService);
+app.use('/emailer', Emailer);
  
 if (HTTPS_ON == 'YES') { 
    let credentials; 
