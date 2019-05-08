@@ -3,6 +3,7 @@ import {GraphQLClient} from "graphql-request";
 import { EmailService } from '../email/email.service';
 import { url } from "inspector";
 import * as uuid from "uuid/v4";
+import { WSAEPROVIDERFAILEDINIT } from "constants";
 const crypto = require("crypto");
 
 const profileCols = 
@@ -17,15 +18,17 @@ roles \
 wallet_address_1 \
 wallet_address_2 \
 is_org_admin \
-verification_code \
-verification_code_expiry \
+verification_code_1 \
+verification_code_expiry_1 \
+verification_code_2 \
+verification_code_expiry_2 \
 primary_email_verified \
 secondary_email_verified ";
 
 export interface ProfileData {
     id: number,
     primary_email: string,
-    secondary_emall: string,
+    secondary_email: string,
     first_name: string,
     last_name: string,
     address: string,
@@ -34,8 +37,10 @@ export interface ProfileData {
     wallet_address_1: string,
     wallet_address_2: string,  
     is_org_admin: boolean, 
-    verification_code: string, 
-    verification_code_expiry:  number,
+    verification_code_1: string, 
+    verification_code_expiry_1:  number,
+    verification_code_2: string, 
+    verification_code_expiry_2:  number,
     primary_email_verified: boolean,
     secondary_email_verified:  boolean
 }
@@ -94,34 +99,20 @@ export class ProfileService {
         return result;
     }
 
-    async sendVerification(email: string, confirmationText: string) {
+    async sendVerification(email:string, profile:ProfileData) {
+            if (email == null) //nothing to verify
+                return profile;
+            if (email === profile.primary_email && profile.primary_email_verified) 
+                return profile; //already verified
+
+            if (email === profile.secondary_email && profile.secondary_email_verified)
+                return profile;
+
             const emailService = new EmailService();
-            // console.log(email);
-            try { 
-                let info = await emailService.sendmail(
-                                    "support@rebloc.io",
-                                    email,
-                                    "support@rebloc.io",
-                                    "Confirm your email address",
-                                    confirmationText);
-            } catch (err) {
-                console.log (err);
-            }
-        }
-    async upsertProfile(profile: ProfileData) {
-
-        // first time registration?
-        const primaryEmail = profile['primary_email'];
-        let existing = await this.getProfile (primaryEmail);
-        if ( (existing.code > 0 && existing.data == null)  || 
-             !profile['primary_email_verified'])  { //no profile exists or primary email not verified
-
             let today = new Date();
-            profile['verification_code_expiry'] = today.getTime() + 86400000; // 24 hours from now
+            let expiry = today.getTime() + 86400000; // 24 hours from now
             let hash = crypto.createHash('sha256').update(uuid()).digest("base64");
-            profile['verification_code'] = hash;
-            console.log(hash);
-            let confirmLink = encodeURIComponent(`http://demo-app.rebloc.io:3000/VerificationPage?email=${primaryEmail}&code=${hash}`);
+            let confirmLink = encodeURIComponent(`http://demo-app.rebloc.io:3000/VerificationPage?email=${email}&code=${hash}`);
             let confirmationText = 
                 `<div>
                     <div>
@@ -131,9 +122,32 @@ export class ProfileService {
                         <a href=${confirmLink}> Verify Email</a>
                     </div>
                 </div>`
-
-            this.sendVerification(primaryEmail, confirmationText);
+            try { 
+                console.log (confirmationText);
+                let info = await emailService.sendmail(
+                                    "support@rebloc.io",
+                                    email,
+                                    "support@rebloc.io",
+                                    "Verify your email address",
+                                    confirmationText);
+            } catch (err) {
+                console.log (err);
+                return profile;
+            }
+            if (email === profile.primary_email) {
+                profile.verification_code_expiry_1 = expiry;
+                profile.verification_code_1  = hash;
+            } else {
+                profile.verification_code_expiry_2 = expiry;
+                profile.verification_code_2  = hash;
+            }
+            return profile;
         }
+    async upsertProfile(profile:ProfileData) {
+         //no profile exists or primary email not verified
+        if ( profile == null)  
+                profile = await this.sendVerification(profile.primary_email, profile);
+    
         let str = "";
         for (var key in profile ) {
             console.log(key);
@@ -141,6 +155,7 @@ export class ProfileService {
            }
         let columns = str.substring(0,str.length-1)
         // console.log(columns);
+        // console.log(profile);
         const query = `
             mutation insert_marketplace_customer ($objects:[marketplace_customer_insert_input!]!)
              {
@@ -157,15 +172,22 @@ export class ProfileService {
               }
             }`;
        
-        console.log(query);
+        // console.log(query);
         const variables = {
             objects: []
         };
 
         variables.objects.push(profile);
         console.log(variables);
-        let result = await this.client.request (query, variables);
-        if (result != null && result['insert_marketplace_customer'] != null)
+        let result; 
+        try { 
+            result = await this.client.request(query, variables);
+        } catch (err) {
+            console.log(err);
+            return null;
+        } 
+        console.log(result['insert_marketplace_customer']);
+        if (result['insert_marketplace_customer'] != null)
             return result['insert_marketplace_customer'].returning[0];
         else 
             return null;
@@ -176,18 +198,28 @@ export class ProfileService {
         profile = result.data;
         console.log(profile);
 
-        if (profile != null) {
-            // check verification code
-            const today = new Date().getTime();
-          
-            if (today <= profile['verification_code_expiry']) {
-                console.log('not expired yet');
-                return (profile['verification_code'] == code) 
-            }
-            else 
-                return false;
-        } else 
+        if (profile == null)
             return false;
+
+        // check verification code
+        const today = new Date().getTime();
+        let isPrimary = (email === profile.primary_email);
+        if (isPrimary) {
+            // expired
+            if (today > profile.verification_code_expiry_1)
+                return false; 
+
+            console.log('1st code not expired yet');
+            profile.primary_email_verified = (profile.verification_code_1 === code);
+            return profile.primary_email_verified;
+        } else {
+            if (today > profile.verification_code_expiry_2)
+                return false; 
+            
+            console.log('2nd code not expired yet');
+            profile.secondary_email_verified = (profile.verification_code_2 === code)
+            return profile.secondary_email_verified;
+        }
     }
 
 }
