@@ -128,7 +128,7 @@ export class ProfileService {
                         <h4>Please verify your email address by clicking the link:</h4>
                     </div>
                     <div>
-                        <a href="${confirmLink}"> Verify Email</a>
+                        <a href=${confirmLink}> Verify Email</a>
                     </div>
                 </div>`
 
