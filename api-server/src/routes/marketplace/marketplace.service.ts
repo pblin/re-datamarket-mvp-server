@@ -51,30 +51,34 @@ export class MarketplaceService {
             console.log(err);
             return (0);
         }
-
-        this.queue = new Queue('orders', {
-            prefix: 'bq',
-            stallInterval: 5000,
-            nearTermWindow: 1200000,
-            delayedDebounce: 1000,
-            redis: {
-                host: REDIS_HOST,
-                port: REDIS_PORT,
-                db: 0,
-                auth_pass: result.data['skey'], 
-                tls: {servername: REDIS_HOST},
-                options: {}
-            },
-            isWorker: false,
-            getEvents: true,
-            sendEvents: true,
-            storeJobs: true,
-            ensureScripts: true,
-            activateDelayedJobs: false,
-            removeOnSuccess: false,
-            removeOnFailure: false,
-            redisScanCount: 100
-        });
+        try { 
+            this.queue = new Queue('orders', {
+                prefix: 'bq',
+                stallInterval: 5000,
+                nearTermWindow: 1200000,
+                delayedDebounce: 1000,
+                redis: {
+                    host: REDIS_HOST,
+                    port: REDIS_PORT,
+                    db: 0,
+                    auth_pass: result.data['skey'], 
+                    tls: {servername: REDIS_HOST},
+                    options: {}
+                },
+                isWorker: false,
+                getEvents: true,
+                sendEvents: true,
+                storeJobs: true,
+                ensureScripts: true,
+                activateDelayedJobs: false,
+                removeOnSuccess: false,
+                removeOnFailure: false,
+                redisScanCount: 100
+            });
+        } catch (err) {
+            console.log(err);
+            return (0);
+        }
         return (1);
     }
     async getAllDatasets () {
@@ -197,11 +201,11 @@ export class MarketplaceService {
     async submitOrder (draft_order: any) {
         // publish order message to a queue
         if (this.queue == null) {
-            let status = await this.connectToJobQueue();
-            if ( status == 0) 
-                return 'redis-err';
-        }
-        
+                let status = await this.connectToJobQueue();
+                if ( status == 0) 
+                    return 'redis-err';
+         }
+    
         this.queue.on('ready', () => {
             console.log('queue now ready to start doing things');
         });
@@ -215,7 +219,13 @@ export class MarketplaceService {
         draft_order['id'] = order_id
 
         let job  = this.queue.createJob (draft_order);
-        job.save().then(( job) => { console.log(job)});
+
+        try { 
+            job.save().then(( job) => { console.log(job)});
+        } catch (err) {
+            console.log(err);
+            return 'redi-err';
+        }
         return order_id;
     }
 
