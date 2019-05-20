@@ -1,6 +1,8 @@
 import * as Queue from 'bee-queue';
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT } from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
+import * as Winston from 'winston';
+// const DailyRotateFile = require('winston-daily-rotate-file');
 
 const options = {
     apiVersion: 'v1', // default
@@ -10,6 +12,13 @@ const options = {
 
 // const vault = require('node-vault')(options);
 const vault = require ('node-vault')(options);
+
+const logger = Winston.createLogger({
+    transports: [
+      new Winston.transports.Console(),
+      new Winston.transports.File({ filename: '/tmp/orderlog/run.log' })
+    ]
+  });
 export class OrderProcessor {
     queue: Queue;
     async connectToJobQueue() {
@@ -19,7 +28,7 @@ export class OrderProcessor {
 
         } 
         catch (err) {
-            console.log("redis error " + err);
+            logger.log ('error', "redis error " + err);
             return (0);
         }
 
@@ -53,21 +62,21 @@ export class OrderProcessor {
         if (this.queue == null )  {
             let status = await this.connectToJobQueue();
             if (status == 0)
-                console.log ('redis error');
+                logger.log ('error', 'redis error');
         }
         
-        if (this.queue != null) {
+        if (this.queue != null) { 
 
             this.queue.on('ready', () => {
-                console.log('queue now ready to start doing things');
+                logger.log ('info', 'queue now ready to start doing things');
             });
     
             this.queue.on('error', (err) => {
-                console.log(`A queue error happened: ${err.message}`);
+                logger.info ('error', `A queue error happened: ${err.message}`);
             });
 
             this.queue.process(async (job) => {
-                console.log(`Processing job ${job.id}: ` + JSON.stringify(job.data));
+                logger.log('info', `Processing job ${job.id}: ` + JSON.stringify(job.data));
                 
                 let marketplaceDB = new MarketplaceDB();
                 let datasetInfo = await marketplaceDB.getDataSet(job.data['dataset_id']);
@@ -76,6 +85,7 @@ export class OrderProcessor {
                     let order:OrderDetail = {
                         ...job.data,
                         dataset_description: datasetInfo['description'],
+                        dataset_name: datasetInfo['name'],
                         seller_id: datasetInfo['dataset_owner_id']
                     };
                     let url = datasetInfo['access_url'];
@@ -84,8 +94,12 @@ export class OrderProcessor {
                         let parts = url.split('/'); 
                         order['data_loc_hash'] = parts.pop() || parts.pop();
                     }
-                    let result = await marketplaceDB.saveOrder(order);
-                    console.log(result);
+                    try { 
+                        let result = await marketplaceDB.saveOrder(order);
+                        logger.log ('info', result);
+                    }catch (err) {
+                        logger.log ('error', err);
+                    }
                 }
             });
         }
