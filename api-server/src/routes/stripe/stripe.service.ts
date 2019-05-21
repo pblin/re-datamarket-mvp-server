@@ -35,6 +35,8 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
   let error;
   let status = 'failed';
   let code = 200;
+  let charge;
+
   try {
     const {
       product,
@@ -59,11 +61,9 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       stripeTokenType,
     } = req.body;
 
-    console.log("amount=" + amount)
-
     if (stripeTokenType === 'card') {
       const idempotency_key = uuidv4();
-      const charge = await stripe.charges.create(
+      charge = await stripe.charges.create(
         {
           amount: amount,
           currency: currency,
@@ -85,7 +85,7 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
     } else {
       throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
     }
-    
+
     status = 'success';
     code = 200;
     console.log(status);
@@ -97,7 +97,8 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       console.log(err);
   }
 
-  res.json({ error, status });
+  const {created, id} = charge;
+  res.json({ error, status, ref: id, timestamp: created });
 });
 
 export default router;
