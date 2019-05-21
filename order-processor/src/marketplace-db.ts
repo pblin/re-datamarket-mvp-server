@@ -1,5 +1,6 @@
 import {Db} from './db/Db';
 import {GraphQLClient} from 'graphql-request';
+import * as Winston from 'winston';
 
 const mktDsCols = 
 "id \
@@ -31,19 +32,26 @@ export interface OrderDetail {
     bid: number,
     offer: number,
     trade: number,
+    pricing_unit: string,
     order_status: number,
-    chain_tx_id: string,
+    blockchain_tx_id: string,
     buyer_wallet_addr: string,
     seller_wallet_addr: string,
     data_loc_hash: string,
-    data_hash: string,
-    data_hash_type: string,
-    data_content_type: string,
-    enc_data_key: string,
-    order_timestamp: string
+    order_timestamp: string,
+    dataset_name: string,
+    dataset_description: string,
+    payment_txn_ref: string,
+    settlement_txn_timestamp: string
+
 };
 
-export class MarketplaceDB {
+const logger = Winston.createLogger({
+    transports: [
+      new Winston.transports.Console(),
+      new Winston.transports.File({ filename: '/tmp/orderlog/db.log' })
+    ]
+  });export class MarketplaceDB {
     client: GraphQLClient;
     constructor() {
         this.client = Db.getInstance().client;
@@ -62,16 +70,19 @@ export class MarketplaceDB {
         }
         // console.log(query);
         // console.log(variables);
-        let data = await this.client.request(query, variables);
-    
-        if ( data ['marketplace_data_source_detail'] !== undefined && 
-             data['marketplace_data_source_detail'].length > 0 ) {
-            let datasetInfo = data ['marketplace_data_source_detail'][0];
-            // console.log(datasetInfo);
-            return datasetInfo;
-        } else {
-            return null; 
-        }
+        try { 
+                let data = await this.client.request(query, variables);
+                if ( data ['marketplace_data_source_detail'] !== undefined && 
+                    data['marketplace_data_source_detail'].length > 0 ) {
+                    let datasetInfo = data ['marketplace_data_source_detail'][0];
+                    // console.log(datasetInfo);
+                    return datasetInfo;
+                } else {
+                    return null; 
+                }
+         } catch (err) {
+             logger.log("erro", err);
+         }
       }
     
       async saveOrder (order:OrderDetail) {
@@ -85,6 +96,7 @@ export class MarketplaceDB {
                                 id,
                                 dataset_id,
                                 dataset_description,
+                                dataset_name,
                                 buyer_id,
                                 seller_id,
                                 bid,
@@ -97,7 +109,8 @@ export class MarketplaceDB {
                                 data_loc_hash,
                                 order_timestamp,
                                 pricing_unit,
-                                settlement_txn_timestamp
+                                settlement_txn_timestamp,
+                                blockchain_tx_id
                             ] 
                           }
                           ) {
@@ -107,10 +120,17 @@ export class MarketplaceDB {
         let variables = {
           objects: []
         }; 
+        order.blockchain_tx_id = 'N/A';
+        order.settlement_txn_timestamp = order.order_timestamp;
         variables.objects.push(order);
         // console.log(mut);
-        console.log(variables);
-        let data = await this.client.request(mut, variables);
-        return (data['insert_marketplace_order_book'].affected_rows);
+        // console.log(variables);
+        logger.log("info", JSON.stringify(variables));
+        try { 
+            let data = await this.client.request(mut, variables);
+            return (data['insert_marketplace_order_book'].affected_rows);
+         } catch (err) {
+             logger.log ("error", err);
+         }
     }
 }

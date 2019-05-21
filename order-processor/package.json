@@ -12,6 +12,7 @@
     "@types/stripe": "^6.25.6",
     "@types/uuid": "^3.4.4",
     "@types/webpack-env": "^1.13.9",
+    "@types/winston": "^2.4.4",
     "bee-queue": "^1.2.2",
     "chai": "^4.1.1",
     "db-migrate": "^0.11.4",
@@ -20,6 +21,7 @@
     "graphql": "^0.10.5",
     "graphql-request": "^1.8.2",
     "graphql-tools": "^1.2.1",
+    "logger": "^0.0.1",
     "longjohn": "^0.2.12",
     "method-override": "^3.0.0",
     "mocha": "^3.5.0",
@@ -32,7 +34,9 @@
     "stripe": "^6.28.0",
     "ts-node": "^8.0.2",
     "typescript": "^2.4.2",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^3.9.0"
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
