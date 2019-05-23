@@ -5,7 +5,6 @@ module.exports = {
     rinkeby: {
       host: "localhost",
       port: 8545,
-      from: "0x11901302c0daA053Ee33D90bBC20F5e4478609d8", // enter your local rinkeby unlocked address
       network_id: 4,
       gas: 4500000, // Gas limit used for deploys
       gasPrice: 10000000000 // 10 gwei
@@ -13,10 +12,7 @@ module.exports = {
     development: {
       host: "127.0.0.1",
       port: 7545,
-      from: "0x99cc20A80C933ea87ED49Ff04C766aA1f270A230",
-      network_id: "*",
-      gas: 4500000, // Gas limit used for deploys
-      gasPrice: 10000000000 // 10 gwei
+      network_id: "*"
     }
   },
   solc: {

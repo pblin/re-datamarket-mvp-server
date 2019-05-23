@@ -144,7 +144,7 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
         return _allTokens[index];
     }
 
-    function constructuor (address _operatorAccount) public {
+    constructor (address _operatorAccount) public {
         if (_operatorAccount != address(0)) {
             operatorAccount = _operatorAccount;
         } else {
@@ -153,6 +153,9 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
         _registerInterface(INTERFACE_ID_ERC721_ENUMERABLE);
     }
 
+    function getOperatorAccount() public view returns (address _operatorAccount) {
+        return (operatorAccount);
+    }
     /**
     * @dev Mint a new RDT token
     * @dev Reverts if not called by management
