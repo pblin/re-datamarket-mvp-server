@@ -166,15 +166,14 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @param _price settlement price
     * @param _pricingUnit usd, wei, eth, ...
     * @param _size file size 
-    * @param _curator curator of the dataset
     */
     function mint(bytes memory _id, string memory _fileHash, string memory _compression, uint32 _size, string memory _ipfsHash, 
-                    uint256 _price, string memory _pricingUnit, string memory _tokenURI, address _curator) public
+                    uint256 _price, string memory _pricingUnit, string memory _tokenURI) public
         {
             uint256 _tokenId = tokenIdPointer;
             uint256 _initialCommission = 0;
             Dataset memory newDataset = Dataset({id: _id, fileHash: _fileHash, compression: _compression, ipfsHash: _ipfsHash, size: _size,
-                                                price: _price, pricingUnit: _pricingUnit, commission: _initialCommission, curator: _curator});
+                                                price: _price, pricingUnit: _pricingUnit, commission: _initialCommission, curator: msg.sender});
 
             _mint(msg.sender, _tokenId);
             _ownedTokens[msg.sender].push(_tokenId);
@@ -277,8 +276,19 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @dev Reverts if token not unsold and not available to be purchased and not called by management
     * @param _tokenId the RDT token ID
     */
-    function purchaseWithFiat(uint256 _tokenId) public onlyUnsold(_tokenId) {
+    function purchaseWithFiat(uint256 _tokenId, uint256 _commission) public onlyUnsold(_tokenId) {
         require(_exists(_tokenId));
+        _approvePurchaser(msg.sender, _tokenId);
+
+        // transfer assets from contract creator (curator) to new owner
+        safeTransferFrom(ownerOf(_tokenId), msg.sender, _tokenId);
+
+        // now purchased - don't allow re-purchase!
+        tokenIdToPurchased[_tokenId] = PurchaseState.FiatPurchase;
+
+        if (datasetInfo[_tokenId].price > 0) {
+            _applyCommission(_tokenId, _commission);
+        }
         // now purchased - don't allow re-purchase!
         emit PurchasedWithFiat(_tokenId);
     }
