@@ -1,8 +1,8 @@
 import * as Queue from 'bee-queue';
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT } from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
-import * as Winston from 'winston';
-// const DailyRotateFile = require('winston-daily-rotate-file');
+const winston = require('winston');
+const DailyRotateFile = require('winston-daily-rotate-file');
 
 const options = {
     apiVersion: 'v1', // default
@@ -12,13 +12,23 @@ const options = {
 
 // const vault = require('node-vault')(options);
 const vault = require ('node-vault')(options);
+require('winston-daily-rotate-file');
 
-const logger = Winston.createLogger({
+const transport = new (winston.transports.DailyRotateFile)({
+    filename: 'application-%DATE%.log',
+    dirname: '/tmp/orderlog',
+    datePattern: 'YYYY-MM-DD-HH',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d'
+});
+
+const logger = winston.createLogger({
     transports: [
-      new Winston.transports.Console(),
-      new Winston.transports.File({ filename: '/tmp/orderlog/run.log' })
+      transport
     ]
   });
+
 export class OrderProcessor {
     queue: Queue;
     async connectToJobQueue() {
@@ -62,21 +72,21 @@ export class OrderProcessor {
         if (this.queue == null )  {
             let status = await this.connectToJobQueue();
             if (status == 0)
-                logger.log ('error', 'redis error');
+                logger.error('redis error');
         }
         
         if (this.queue != null) { 
 
             this.queue.on('ready', () => {
-                logger.log ('info', 'queue now ready to start doing things');
+                logger.info('queue now ready to start doing things');
             });
     
             this.queue.on('error', (err) => {
-                logger.info ('error', `A queue error happened: ${err.message}`);
+                logger.error(`A queue error happened: ${err.message}`);
             });
 
             this.queue.process(async (job) => {
-                logger.log('info', `Processing job ${job.id}: ` + JSON.stringify(job.data));
+                logger.info( `Processing job ${job.id}: ` + JSON.stringify(job.data));
                 
                 let marketplaceDB = new MarketplaceDB();
                 let datasetInfo = await marketplaceDB.getDataSet(job.data['dataset_id']);
@@ -96,9 +106,9 @@ export class OrderProcessor {
                     }
                     try { 
                         let result = await marketplaceDB.saveOrder(order);
-                        logger.log ('info', result);
+                        logger.info(result);
                     }catch (err) {
-                        logger.log ('error', err);
+                        logger.error (err);
                     }
                 }
             });

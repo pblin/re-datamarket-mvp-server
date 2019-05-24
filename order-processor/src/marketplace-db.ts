@@ -1,6 +1,5 @@
 import {Db} from './db/Db';
 import {GraphQLClient} from 'graphql-request';
-import * as Winston from 'winston';
 
 const mktDsCols = 
 "id \
@@ -24,6 +23,7 @@ date_created \
 date_modified \
 sample_access_url \
 dataset_owner_id";
+
 export interface OrderDetail {
     id: string,
     dataset_id: number,
@@ -46,10 +46,21 @@ export interface OrderDetail {
 
 };
 
-const logger = Winston.createLogger({
+const winston = require('winston');
+require('winston-daily-rotate-file');
+
+const transport = new (winston.transports.DailyRotateFile)({
+    filename: 'db-%DATE%.log',
+    dirname: '/tmp/orderlog',
+    datePattern: 'YYYY-MM-DD-HH',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d'
+});
+
+const logger = winston.createLogger({
     transports: [
-      new Winston.transports.Console(),
-      new Winston.transports.File({ filename: '/tmp/orderlog/db.log' })
+        transport
     ]
   });export class MarketplaceDB {
     client: GraphQLClient;
@@ -81,7 +92,7 @@ const logger = Winston.createLogger({
                     return null; 
                 }
          } catch (err) {
-             logger.log("erro", err);
+             logger.error( err);
          }
       }
     
@@ -125,12 +136,12 @@ const logger = Winston.createLogger({
         variables.objects.push(order);
         // console.log(mut);
         // console.log(variables);
-        logger.log("info", JSON.stringify(variables));
+        logger.info(JSON.stringify(variables));
         try { 
             let data = await this.client.request(mut, variables);
             return (data['insert_marketplace_order_book'].affected_rows);
          } catch (err) {
-             logger.log ("error", err);
+             logger.error(err);
          }
     }
 }
