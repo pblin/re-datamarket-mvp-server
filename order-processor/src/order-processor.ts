@@ -1,8 +1,8 @@
 import * as Queue from 'bee-queue';
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT } from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
-import * as Winston from 'winston';
-// const DailyRotateFile = require('winston-daily-rotate-file');
+const winston = require('winston');
+const DailyRotateFile = require('winston-daily-rotate-file');
 
 const options = {
     apiVersion: 'v1', // default
@@ -12,13 +12,23 @@ const options = {
 
 // const vault = require('node-vault')(options);
 const vault = require ('node-vault')(options);
+require('winston-daily-rotate-file');
 
-const logger = Winston.createLogger({
+const transport = new (winston.transports.DailyRotateFile)({
+    filename: 'application-%DATE%.log',
+    dirname: '/tmp/orderlog',
+    datePattern: 'YYYY-MM-DD-HH',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d'
+});
+
+const logger = winston.createLogger({
     transports: [
-      new Winston.transports.Console(),
-      new Winston.transports.File({ filename: '/tmp/orderlog/run.log' })
+      transport
     ]
   });
+
 export class OrderProcessor {
     queue: Queue;
     async connectToJobQueue() {
