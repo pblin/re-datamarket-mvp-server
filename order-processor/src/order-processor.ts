@@ -72,21 +72,21 @@ export class OrderProcessor {
         if (this.queue == null )  {
             let status = await this.connectToJobQueue();
             if (status == 0)
-                logger.log ('error', 'redis error');
+                logger.error('redis error');
         }
         
         if (this.queue != null) { 
 
             this.queue.on('ready', () => {
-                logger.log ('info', 'queue now ready to start doing things');
+                logger.info('queue now ready to start doing things');
             });
     
             this.queue.on('error', (err) => {
-                logger.info ('error', `A queue error happened: ${err.message}`);
+                logger.error(`A queue error happened: ${err.message}`);
             });
 
             this.queue.process(async (job) => {
-                logger.log('info', `Processing job ${job.id}: ` + JSON.stringify(job.data));
+                logger.info( `Processing job ${job.id}: ` + JSON.stringify(job.data));
                 
                 let marketplaceDB = new MarketplaceDB();
                 let datasetInfo = await marketplaceDB.getDataSet(job.data['dataset_id']);
@@ -106,9 +106,9 @@ export class OrderProcessor {
                     }
                     try { 
                         let result = await marketplaceDB.saveOrder(order);
-                        logger.log ('info', result);
+                        logger.info(result);
                     }catch (err) {
-                        logger.log ('error', err);
+                        logger.error (err);
                     }
                 }
             });

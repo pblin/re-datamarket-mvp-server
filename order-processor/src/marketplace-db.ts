@@ -92,7 +92,7 @@ const logger = winston.createLogger({
                     return null; 
                 }
          } catch (err) {
-             logger.log("erro", err);
+             logger.error( err);
          }
       }
     
@@ -136,12 +136,12 @@ const logger = winston.createLogger({
         variables.objects.push(order);
         // console.log(mut);
         // console.log(variables);
-        logger.log("info", JSON.stringify(variables));
+        logger.info(JSON.stringify(variables));
         try { 
             let data = await this.client.request(mut, variables);
             return (data['insert_marketplace_order_book'].affected_rows);
          } catch (err) {
-             logger.log ("error", err);
+             logger.error(err);
          }
     }
 }
