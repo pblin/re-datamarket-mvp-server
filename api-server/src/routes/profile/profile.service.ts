@@ -164,32 +164,7 @@ export class ProfileService {
             return profile;
     }
 
-    async upsertProfile(profileIn:ProfileData) {
-        let profile:ProfileData = {
-            ...
-            profileIn
-        };
-
-        const query = `
-            mutation insert_marketplace_customer ($objects:[marketplace_customer_insert_input!]!)
-             {
-              insert_marketplace_customer ( 
-                objects:$objects,
-                on_conflict: { 
-                  constraint: customer_pkey, 
-                  update_columns: [ ${profileCols} ] 
-                }
-              ) {
-                returning {
-                    ${profileCols}
-                }
-              }
-            }`;
-
-        logger.info(query);
-        const variables = {
-            objects: []
-        };
+    async upsertProfile(profile:ProfileData) {
 
         let email2Hex = hex(profile.primary_email);
         const walletKey = `secret/${email2Hex}-1`;
@@ -206,8 +181,37 @@ export class ProfileService {
             let savePrivateKey = await vault.write(walletKey,{pk:userWallet.getPrivateKeyString()});
             address_1 = userWallet.getChecksumAddressString();
             logger.info(`wallet address 1 = ${address_1}`);
-            profile.wallet_address_1 = address_1;
+            profile['wallet_address_1'] = address_1;
         }
+        
+        let str = "";
+        for (var key in profile ) {		
+              console.log(key);		
+             str = str + key + ',';		
+            }		
+        
+        let columns = str.substring(0,str.length-1);
+
+        const query = `
+            mutation insert_marketplace_customer ($objects:[marketplace_customer_insert_input!]!)
+             {
+              insert_marketplace_customer ( 
+                objects:$objects,
+                on_conflict: { 
+                  constraint: customer_pkey, 
+                  update_columns: [ ${columns} ] 
+                }
+              ) {
+                returning {
+                    ${profileCols}
+                }
+              }
+            }`;
+
+        logger.info(query);
+        const variables = {
+            objects: []
+        };
 
         variables.objects.push(profile);
         logger.info(variables);
