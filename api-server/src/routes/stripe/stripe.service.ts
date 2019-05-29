@@ -86,7 +86,7 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       );
       logger.info(JSON.stringify(charge));
     } else {
-      throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
+        throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
     }
     
     status = 
