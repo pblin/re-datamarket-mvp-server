@@ -252,6 +252,7 @@ export class MarketplaceService {
                     seller_id
                     seller_wallet_addr
                     dataset_id
+                    dataset_name
                     dataset_description
                     data_loc_hash
                     payment_txn_ref

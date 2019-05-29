@@ -38,6 +38,8 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
   let error;
   let status;
   let code = 200;
+  let charge;
+
   try {
     const {
       product,
@@ -62,7 +64,6 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       stripeTokenType,
     } = req.body;
 
-    logger.info("amount=" + amount)
     let charge;
     if (stripeTokenType === 'card') {
       const idempotency_key = uuidv4();
@@ -93,11 +94,11 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
         ref:charge.id,
         timestamp:charge.created
       };
+
     code = 200;
     // console.log(status);
 
   } catch (err) {
-      console.error(err);
       status = {
         ref:"failed",
         timestamp: 0
@@ -107,7 +108,8 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       logger.error(err);
   }
 
-  res.json({ error, status });
+  const {created, id} = charge;
+  res.json({ error, status, ref: id, timestamp: created });
 });
 
 export default router;
