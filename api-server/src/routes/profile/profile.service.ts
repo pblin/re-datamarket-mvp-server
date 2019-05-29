@@ -4,26 +4,39 @@ import { EmailService } from '../email/email.service';
 import { url } from "inspector";
 import * as uuid from "uuid/v4";
 import { WSAEPROVIDERFAILEDINIT } from "constants";
+import { VAULT_SERVER, VAULT_SERVER_TOKEN } from '../../config/ConfigEnv';
+import { LogService } from '../../utils/logger';
+const logger = new LogService().getLogger();
+
+const options = {
+  apiVersion: 'v1', // default
+  endpoint: VAULT_SERVER, // default
+  token:  VAULT_SERVER_TOKEN // optional client token; 
+};
+
+const vault = require("node-vault")(options);
+const hex = require('string-hex');
 const crypto = require("crypto");
+const ethWallet = require("ethereumjs-wallet");
 
 const profileCols = 
-"id \
-primary_email \
-secondary_email \
-first_name \
-last_name \
-address \
-phone \
-roles \
-wallet_address_1 \
-wallet_address_2 \
-is_org_admin \
-verification_code_1 \
-verification_code_expiry_1 \
-verification_code_2 \
-verification_code_expiry_2 \
-primary_email_verified \
-secondary_email_verified ";
+    "id \
+    primary_email \
+    secondary_email \
+    first_name \
+    last_name \
+    address \
+    phone \
+    roles \
+    wallet_address_1 \
+    wallet_address_2 \
+    is_org_admin \
+    verification_code_1 \
+    verification_code_expiry_1 \
+    verification_code_2 \
+    verification_code_expiry_2 \
+    primary_email_verified \
+    secondary_email_verified ";
 
 export interface ProfileData {
     id: number,
@@ -44,12 +57,15 @@ export interface ProfileData {
     primary_email_verified: boolean,
     secondary_email_verified:  boolean
 }
+
+
 export class ProfileService {
     client: GraphQLClient;
-
+    
     constructor() {
         this.client = Db.getInstance().client;
     }
+
     async getProfile(email: string) {
         const query = `query customer ($email: String ) {
           marketplace_customer (where:{primary_email:{ _eq : $email }})
@@ -69,7 +85,7 @@ export class ProfileService {
         try { 
             data = await this.client.request (query, variables);
         } catch (err) {
-            console.log(err); 
+            logger.error(err); 
             result.code = -1;
             return result;
         }
@@ -96,17 +112,21 @@ export class ProfileService {
         };
 
         let result = await this.client.request (query, variables);
+        logger.info(result);
         return result;
     }
 
     async sendVerification(email:string, profile:ProfileData) {
             if (email == null) //nothing to verify
                 return profile;
-            if (email === profile.primary_email && profile.primary_email_verified) 
+
+            if (email == profile.primary_email && profile.primary_email_verified) 
                 return profile; //already verified
 
-            if (email === profile.secondary_email && profile.secondary_email_verified)
+            if (email == profile.secondary_email && profile.secondary_email_verified)
                 return profile;
+            
+            logger.info(`send verification email to: ${email}`);
 
             const emailService = new EmailService();
             let today = new Date();
@@ -123,7 +143,7 @@ export class ProfileService {
                     </div>
                 </div>`
             try { 
-                console.log (confirmationText);
+                logger.info(confirmationText);
                 let info = await emailService.sendmail(
                                     "support@rebloc.io",
                                     email,
@@ -131,7 +151,7 @@ export class ProfileService {
                                     "Verify your email address",
                                     confirmationText);
             } catch (err) {
-                console.log (err);
+                logger.error("email send error = " + err);
                 return profile;
             }
             if (email === profile.primary_email) {
@@ -142,20 +162,14 @@ export class ProfileService {
                 profile.verification_code_2  = hash;
             }
             return profile;
-        }
-    async upsertProfile(profile:ProfileData) {
-         //no profile exists or primary email not verified
-        if ( profile == null)  
-                profile = await this.sendVerification(profile.primary_email, profile);
-    
-        let str = "";
-        for (var key in profile ) {
-            console.log(key);
-            str = str + key + ',';
-           }
-        let columns = str.substring(0,str.length-1)
-        // console.log(columns);
-        // console.log(profile);
+    }
+
+    async upsertProfile(profileIn:ProfileData) {
+        let profile:ProfileData = {
+            ...
+            profileIn
+        };
+
         const query = `
             mutation insert_marketplace_customer ($objects:[marketplace_customer_insert_input!]!)
              {
@@ -163,7 +177,7 @@ export class ProfileService {
                 objects:$objects,
                 on_conflict: { 
                   constraint: customer_pkey, 
-                  update_columns: [ ${columns} ] 
+                  update_columns: [ ${profileCols} ] 
                 }
               ) {
                 returning {
@@ -171,32 +185,52 @@ export class ProfileService {
                 }
               }
             }`;
-       
-        // console.log(query);
+
+        logger.info(query);
         const variables = {
             objects: []
         };
 
+        let email2Hex = hex(profile.primary_email);
+        const walletKey = `secret/${email2Hex}-1`;
+        logger.info ('wallet key =' + walletKey);
+
+        let walletPKQuery = null;
+        let address_1 = null;
+        try { 
+            walletPKQuery = await vault.read(walletKey);
+            logger.info("wallet query = " + JSON.stringify(walletPKQuery));
+        } catch (err) {
+            logger.info ("no private key, creat new key pair");
+            let userWallet = ethWallet.generate();
+            let savePrivateKey = await vault.write(walletKey,{pk:userWallet.getPrivateKeyString()});
+            address_1 = userWallet.getChecksumAddressString();
+            logger.info(`wallet address 1 = ${address_1}`);
+            profile.wallet_address_1 = address_1;
+        }
+
         variables.objects.push(profile);
-        console.log(variables);
+        logger.info(variables);
+
         let result; 
         try { 
             result = await this.client.request(query, variables);
         } catch (err) {
-            console.log(err);
+            logger.error('graphQL error = ' + err);
             return null;
         } 
-        console.log(result['insert_marketplace_customer']);
+        logger.info(result['insert_marketplace_customer']);
         if (result['insert_marketplace_customer'] != null)
             return result['insert_marketplace_customer'].returning[0];
         else 
             return null;
     }
+
     async verifyEmail (email:string, code:string) {
         let profile:ProfileData;
         let result  = await this.getProfile(email);
         profile = result.data;
-        console.log(profile);
+        logger.info(profile);
 
         if (profile == null)
             return false;
@@ -209,14 +243,14 @@ export class ProfileService {
             if (today > profile.verification_code_expiry_1)
                 return false; 
 
-            console.log('1st code not expired yet');
+            logger.info('1st code not expired yet');
             profile.primary_email_verified = (profile.verification_code_1 === code);
             return profile.primary_email_verified;
         } else {
             if (today > profile.verification_code_expiry_2)
                 return false; 
             
-            console.log('2nd code not expired yet');
+            logger.info('2nd code not expired yet');
             profile.secondary_email_verified = (profile.verification_code_2 === code)
             return profile.secondary_email_verified;
         }

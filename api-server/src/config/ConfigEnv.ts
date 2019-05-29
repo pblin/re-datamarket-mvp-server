@@ -19,6 +19,7 @@ export const APIKEY = process.env.APIKEY;
 export const GRAPHQL = process.env.GRAPHQL;
 export const VAULT_SERVER = process.env.VAULT_SERVER;
 export const VAULT_CLIENT_TOKEN = process.env.VAULT_TOKEN;
+export const VAULT_SERVER_TOKEN = process.env.VAULT_SERVER_TOKEN;
 export const SSL_PFX = process.env.SSL_PFX;
 
 export const SSL_KEY = process.env.SSL_KEY;

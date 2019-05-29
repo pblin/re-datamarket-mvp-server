@@ -2,6 +2,8 @@ import {Db} from '../../db/Db';
 import {DATA_HOST_URL} from '../../config/ConfigEnv';
 import {GraphQLClient} from 'graphql-request';
 const fetch = require('request-promise');
+import { LogService } from '../../utils/logger';
+const logger = new LogService().getLogger();
 
 const dsCols = 
 "id \
@@ -28,6 +30,7 @@ date_created \
 date_modified \
 sample_access_url \
 enc_sample_key \
+stage \
 dataset_owner_id";
 
 export class SchemaService {
@@ -60,10 +63,11 @@ export class SchemaService {
             }
         }
         variables.objects.push(obj);
-        console.log(variables);
+        // console.log(mut);
+        // console.log(variables);
     
         let data = await this.client.request(mut, variables);
-        console.log(data)
+        logger.info(data)
         if (data !== undefined) {
             return data['insert_marketplace_data_source_detail'].affected_rows;
         } else
@@ -91,22 +95,22 @@ export class SchemaService {
                     affected_rows
                 }
             }`;
-    
+        // console.log(mut);
+
         let variables = {
             objects: []
         };
-        let schemaItems = schema;
-    
-        for (var i = 0; i < schemaItems.length; i++) {
-            if (schemaItems[i].label === undefined) {
-                schemaItems[i].label = schemaItems[i].name.replace("_", " ").toLowerCase();
+
+        // console.log(schema.length);
+        for (var i = 0; i < schema.length; i++) {
+            if (schema[i].label === undefined) {
+                schema[i].label = schema[i].name.replace("_", " ").toLowerCase();
             }
-            // console.log(schemaItems[i]);
             const item = {
-                    field_name:schemaItems[i].name,
-                    description:schemaItems[i].description.toLowerCase(),
-                    field_label:schemaItems[i].label,
-                    field_type:schemaItems[i].type,
+                    field_name:schema[i].name,
+                    description:schema[i].description.toLowerCase(),
+                    field_label:schema[i].label,
+                    field_type:schema[i].type,
                     region: region,
                     country: country,
                     search_terms:search_terms,
@@ -115,9 +119,10 @@ export class SchemaService {
 
             variables.objects.push(item);
         }
-   
+       // console.log(variables);
+
         let data = await this.client.request(mut, variables);
-        // console.log(data);
+        logger.info(data);
 
         if (data !== undefined ) {
             return data['insert_marketplace_source_of_field'].affected_rows;
@@ -139,12 +144,14 @@ export class SchemaService {
         };
 
         let data = await this.client.request(mut, variables);
+        logger.info(data);
         if (data !== undefined ) {
             return data['delete_marketplace_source_of_field'].affected_rows;
         } else {
             return -1; 
         }
     }
+
     async deleteSchema (id: string) {
         const mu = `mutation delete_schema ($id: String ) {
             delete_marketplace_data_source_detail (
@@ -157,7 +164,7 @@ export class SchemaService {
             id
         };
 
-        console.log(variables);
+        logger.info(variables);
         let data = await this.client.request(mu, variables);
         // console.log(data);
 
@@ -167,6 +174,7 @@ export class SchemaService {
             return -1; 
         }
     }
+
     async getAllDatasetsOfUser (owner_id: number, stage: number) {
         let query;
         let variables;
@@ -203,15 +211,15 @@ export class SchemaService {
                 owner_id
             }
         }
-        console.log (query);
-        console.log (variables);
+        // console.log (query);
+        // console.log (variables);
         
         let data; 
         try {
             data  = await this.client.request(query, variables);
         } 
         catch (err) {
-            console.log(err);
+            logger.error(err);
             return -1;
         }
         
@@ -232,8 +240,8 @@ export class SchemaService {
         let variables = {
             id
         }
-        console.log(query);
-        console.log(variables);
+        // logger.info(query);
+        // logger.info(variables);
         let data = await this.client.request(query, variables);
  
         if ( data ['marketplace_data_source_detail'] !== undefined && 
@@ -254,6 +262,7 @@ export class SchemaService {
             return null; 
         }
     }
+    
     async getAvailableTypes () {
         const query =  `query  {
             marketplace_field (distinct_on: [type] )
@@ -284,8 +293,8 @@ export class SchemaService {
         };
 
         let response = await fetch(options);
-        console.log(response);
-        console.log(JSON.stringify(response));
+        // console.log(response);
+        // console.log(JSON.stringify(response));
         return response;
     }
 }

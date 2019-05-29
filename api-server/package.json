@@ -9,11 +9,13 @@
     "@types/node-fetch": "^2.3.3",
     "@types/stripe": "^6.25.6",
     "@types/uuid": "^3.4.4",
+    "@types/winston": "^2.4.4",
     "azure-queue-node": "^1.1.0",
     "bee-queue": "^1.2.2",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
     "crypto": "^1.0.1",
+    "ethereumjs-wallet": "^0.6.3",
     "express": "^4.16.4",
     "fibers": "^3.1.1",
     "fuzzball": "^1.2.0",
@@ -29,8 +31,11 @@
     "pg": "^7.1.2",
     "redis": "^2.8.0",
     "request-promise": "^4.2.4",
+    "string-hex": "^1.0.0",
     "stripe": "^6.28.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^3.9.0"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.42",

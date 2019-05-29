@@ -3,6 +3,8 @@ import {GraphQLClient} from 'graphql-request';
 import * as Queue from 'bee-queue';
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT } from '../../config/ConfigEnv';
 import * as uuidv4 from 'uuid/v4';
+import { LogService } from '../../utils/logger';
+const logger = new LogService().getLogger();
 
 const options = {
     apiVersion: 'v1', // default
@@ -34,6 +36,8 @@ json_schema \
 date_created \
 date_modified \
 sample_access_url \
+stage \
+asset_token_address \
 dataset_owner_id";
 
 export class MarketplaceService {
@@ -48,7 +52,7 @@ export class MarketplaceService {
             result = await vault.read('secret/azureredis');
         } 
         catch (err) {
-            console.log(err);
+            logger.error(err);
             return (0);
         }
         try { 
@@ -76,7 +80,7 @@ export class MarketplaceService {
                 redisScanCount: 100
             });
         } catch (err) {
-            console.log(err);
+            logger.error(err);
             return (0);
         }
         return (1);
@@ -132,14 +136,14 @@ export class MarketplaceService {
                 }
             }
         }
-        console.log(variables);
+        // console.log(variables);
         let data = await this.client.request(query,variables);
         
         let x = 0;
         let hitList = [];
         if ( data ['marketplace_source_of_field'] !== undefined ) {
             let objList = data ['marketplace_source_of_field'];
-            console.log(objList.length);
+            // console.log(objList.length);
             for (var i = 0; i <  objList.length; i++ ) {
                 let isTermClose = 0;
                 let searchTermList = objList[i]['search_terms'];
@@ -170,7 +174,7 @@ export class MarketplaceService {
       variables = {
           objects: hitList
         }
-      console.log(hitList);
+      logger.info(`hist list = ( ${hitList} )`);
       data = await this.client.request(query,variables);
       
       if (data['marketplace_data_source_detail'] !== undefined ) {
@@ -198,6 +202,7 @@ export class MarketplaceService {
             return null; 
         }
     }
+
     async submitOrder (draft_order: any) {
         // publish order message to a queue
         if (this.queue == null) {
@@ -207,11 +212,11 @@ export class MarketplaceService {
          }
     
         this.queue.on('ready', () => {
-            console.log('queue now ready to start doing things');
+            logger.info('queue now ready to start doing things');
         });
 
         this.queue.on('error', (err) => {
-            console.log(`A queue error happened: ${err.message}`);
+            logger.error(`A queue error happened: ${err.message}`);
             return 'q_err';
         });
         
@@ -221,9 +226,9 @@ export class MarketplaceService {
         let job  = this.queue.createJob (draft_order);
 
         try { 
-            job.save().then(( job) => { console.log(job)});
+            job.save().then(( job) => { logger.info(`job = ${job}`) });
         } catch (err) {
-            console.log(err);
+            logger.error(err);
             return 'redi-err';
         }
         return order_id;

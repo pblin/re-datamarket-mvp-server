@@ -52,14 +52,13 @@ router.post('/', (req, res) => {
     let email = null;
     let profile:ProfileData = req.body;
 
-    if (req.query.confirmEmail != undefined)
-        if (req.query.confirmEmail=='2') 
-            email = profile.secondary_email;
-        else
-            email = profile.primary_email;
+    if (req.query.confirmEmail != undefined && req.query.confirmEmail=='2')
+        email = profile.secondary_email;
+    else
+        email = profile.primary_email;
 
     console.log ("email=" + email);
-    return profileService.sendVerification(email,profile).then((profile) => {
+    return profileService.sendVerification(email, profile).then((profile) => {
                 return profileService.upsertProfile(profile);
          }).then ((result) => {
             if (result != null)
