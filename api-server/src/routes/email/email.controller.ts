@@ -2,12 +2,13 @@ import * as express from 'express';
 import { SchemaService } from '../schema/schema.service';
 import { ProfileService } from '../profile/profile.service';
 import { EmailService } from './email.service';
-// import { VAULT_SERVER, VAULT_CLIENT_TOKEN, SMTP_HOST, SMTP_PORT } from '../../config/ConfigEnv';
+import { LogService } from '../../utils/logger';
+const logger = new LogService().getLogger();
 
 const router = express.Router();
 const supportEmail = 'support@rebloc.io';
 router.post('/:address', async (req, res) => {
-  console.log(JSON.stringify(req.body));
+  logger.info(JSON.stringify(req.body));
   
   const emailTo = req.params.address;
   let dsId = req.body.dataset_id;
@@ -20,7 +21,7 @@ router.post('/:address', async (req, res) => {
             datasetDetail = await schemaService.getAdataset (dsId, 0);
         }
         catch(err) {
-            console.log (err);
+            logger.error (err);
         }
         if (req.body.type == 's') { // sample data
             const {access_url,enc_data_key, data_hash} = datasetDetail;
@@ -68,11 +69,11 @@ router.post('/:address', async (req, res) => {
                                         emailHTML);
     } 
   catch (err) {
-      console.log (err);
+      logger.error(err);
       res.status(500).send("eamil server error");
   }
   if (info != null) {
-    console.log("Message sent: %s", info.messageId);
+    logger.info("Message sent: %s", info.messageId);
     res.sendStatus(200);
   } else {
       res.status(404).send("email not sent");
@@ -81,7 +82,7 @@ router.post('/:address', async (req, res) => {
 });
 
 router.post('/:address/send/:ownerid', async (req, res) => {
-  console.log(JSON.stringify(req.body));
+  // logger.info(JSON.stringify(req.body));
 
   const emailFrom = req.params.address;
   let receiverProfile;
@@ -90,7 +91,7 @@ router.post('/:address/send/:ownerid', async (req, res) => {
     receiverProfile = await profileService.getProfileWithId(req.params.ownerid);
   }
   catch (err) {
-    console.log(err);
+    logger.error(err);
     res.status(500).send("Receiver profile query error.")
   }
 
@@ -102,7 +103,7 @@ router.post('/:address/send/:ownerid', async (req, res) => {
        }
   
   const { first_name, last_name, primary_email } = receiverProfile['marketplace_customer'][0];
-  console.log(receiverProfile);
+  // console.log(receiverProfile);
   let dsName = req.body.dataset_name;
   let dsId = req.body.dataset_id;
 
@@ -122,12 +123,12 @@ router.post('/:address/send/:ownerid', async (req, res) => {
                                           req.body.subject, 
                                           emailText);
     } catch (err) {
-      console.log (err);
+      logger.error(err);
       res.status(500).send("eamil server error");
   }
 
   if (info != null) {
-      console.log("Message sent: %s", info.messageId);
+      // console.log("Message sent: %s", info.messageId);
       res.sendStatus(200);
   } else {
       res.status(404).send("email not sent");

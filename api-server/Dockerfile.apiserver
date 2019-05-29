@@ -1,6 +1,7 @@
 FROM node:10.15.3-alpine
 
 WORKDIR /app
+RUN mkdir /tmp/serverlog
 
 COPY . /app
 RUN yarn

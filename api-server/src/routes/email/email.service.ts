@@ -1,4 +1,6 @@
+import { LogService } from '../../utils/logger';
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN, SMTP_HOST, SMTP_PORT } from '../../config/ConfigEnv';
+
 
 const options = {
     apiVersion: 'v1', // default
@@ -8,6 +10,8 @@ const options = {
 
 const vault = require("node-vault")(options);
 const nodemailer = require("nodemailer");
+const logger = new LogService().getLogger();
+
 export class EmailService {
     adminEmail = 'support@rebloc.io';
 
@@ -19,7 +23,8 @@ export class EmailService {
             
             let emailPass; 
             let result = await vault.read('secret/email');
-        
+            // logger.info (result['data']);
+
             if (result == null || result['data'] == null || result['data'] === undefined) 
                 return "server error";
             else 
@@ -34,7 +39,7 @@ export class EmailService {
                     pass: emailPass // generated ethereal password
                 }
             });
-            console.log (message);
+            logger.info(message);
 
             // setup email data with unicode symbols
             let mailOptions = {

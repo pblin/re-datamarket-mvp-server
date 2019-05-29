@@ -1,5 +1,7 @@
 import * as express from 'express';
 import { MarketplaceService } from './marketplace.service';
+import { LogService } from '../../utils/logger';
+const logger = new LogService().getLogger();
 
 const router = express.Router();
 interface OrderInput {
@@ -24,19 +26,20 @@ router.get('/', (req, res) => {
         }).catch(() => {
              return res.status(500).send("unknown server error"); //TODO: Introduce better error handling
             });
-});
+    });
 
 router.get('/dataset/:assetid', (req, res, next) => {
     return marketplaceService.getAdataset(req.params.assetid).then(datasets => {
-            if( datasets == null ) {
-                return res.status(404).send("resource not found");
-            } else {
-                return res.status(200).send(datasets);
-            }
-        }).catch(() => {
-             return res.status(500).send("unknown server error"); 
+                if( datasets == null ) {
+                    return res.status(404).send("resource not found");
+                } else {
+                    return res.status(200).send(datasets);
+                }
+            }).catch(() => {
+                    return res.status(500).send("unknown server error"); 
             });
 });
+
 router.get('/search', (req, res) => {
     let country = '';
     let region = '';
@@ -65,10 +68,10 @@ router.get('/search', (req, res) => {
 
   router.post('/order/submit', (req, res) => {
     let draft_order:OrderInput = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     draft_order['id'] = -1;
 
-    console.log (draft_order);
+    logger.info(`draft order = ${draft_order}`);
     return marketplaceService.submitOrder(draft_order).then (result => {
             if (result == 'redis_err' || result == 'q_err') {
                 if (result == 'redis_err')
@@ -82,10 +85,13 @@ router.get('/search', (req, res) => {
             return res.status(500).send("server error"); 
         });
   });
+
   router.get('/order/list/:userid', (req, res) => {
+
     if (req.params.userid == null) {
         res.send(0)
     }
+    logger.info(`order list for ${req.params.userid}`);
     return marketplaceService.getUserOrders(req.params.userid).then (orders => {
         if (orders == null) {
             return res.status(400).send("query failed.");
