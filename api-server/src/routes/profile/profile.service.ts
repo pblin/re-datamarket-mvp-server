@@ -186,7 +186,7 @@ export class ProfileService {
         
         let str = "";
         for (var key in profile ) {		
-              console.log(key);		
+              logger.info(key);		
              str = str + key + ',';		
             }		
         

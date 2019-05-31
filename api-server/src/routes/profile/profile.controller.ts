@@ -22,13 +22,12 @@ router.get('/:email', (req, res, next) => {
             });
 });
 
-router.get('/verify/:email/:code', (req, res) => {
-    if (req.params.email == null || req.params.code == null ) {
+router.post('/verify/:email', (req, res) => {
+    if (req.params.email == null || req.body.code == null ) {
         return res.sendStatus(404);
     }
-    // console.log(req.params.email);
-    // console.log(req.params.code);
-    return profileService.verifyEmail(req.params.email, req.params.code).then((verification) => {
+    
+    return profileService.verifyEmail(req.params.email, req.body.code).then((verification) => {
             return res.send(verification);
         }).catch((err) => {
              return res.status(500).send(false);
@@ -45,9 +44,8 @@ router.post('/confirm/:which', (req, res) => {
         email = profile.secondary_email; 
     else 
         email = profile.primary_email;
-
-    
 });
+
 router.post('/', (req, res) => {
     let email = null;
     let profile:ProfileData = req.body;
@@ -57,7 +55,7 @@ router.post('/', (req, res) => {
     else
         email = profile.primary_email;
 
-    console.log ("email=" + email);
+    // console.log ("email=" + email);
     return profileService.sendVerification(email, profile).then((profile) => {
                 return profileService.upsertProfile(profile);
          }).then ((result) => {
