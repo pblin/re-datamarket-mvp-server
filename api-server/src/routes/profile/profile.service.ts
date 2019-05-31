@@ -241,22 +241,29 @@ export class ProfileService {
 
         // check verification code
         const today = new Date().getTime();
-        let isPrimary = (email === profile.primary_email);
+        let isPrimary = (email == profile.primary_email);
+        // console.log(isPrimary);
+
         if (isPrimary) {
             // expired
             if (today > profile.verification_code_expiry_1)
                 return false; 
 
             logger.info('1st code not expired yet');
-            profile.primary_email_verified = (profile.verification_code_1 === code);
-            return profile.primary_email_verified;
+            logger.info ('code =' + code + ' | code in db = ' + profile.verification_code_1);
+            profile.primary_email_verified = (profile.verification_code_1 == code);
+            let result = await this.upsertProfile(profile);
+            return result.primary_email_verified;
+
         } else {
             if (today > profile.verification_code_expiry_2)
                 return false; 
             
             logger.info('2nd code not expired yet');
-            profile.secondary_email_verified = (profile.verification_code_2 === code)
-            return profile.secondary_email_verified;
+            logger.info ('code =' + code + ' | code in db = ' + profile.verification_code_2);
+            profile.secondary_email_verified = (profile.verification_code_2 == code);
+            let result = await this.upsertProfile(profile);
+            return result.secondary_email_verified;
         }
     }
 
