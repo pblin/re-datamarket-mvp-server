@@ -29,6 +29,7 @@ router.post('/verify/:email', (req, res) => {
     return profileService.verifyEmail(req.params.email, req.body.code).then((verification) => {
             return res.send(verification);
         }).catch((err) => {
+            console.log(err);
              return res.status(500).send(false);
     });
 });
