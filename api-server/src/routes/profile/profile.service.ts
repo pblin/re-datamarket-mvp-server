@@ -131,15 +131,18 @@ export class ProfileService {
             const emailService = new EmailService();
             let today = new Date();
             let expiry = today.getTime() + 86400000; // 24 hours from now
-            let hash = crypto.createHash('sha256').update(uuid()).digest("base64");
-            let confirmLink = encodeURIComponent(`http://demo-app.rebloc.io:3000/VerificationPage?email=${email}&code=${hash}`);
+            //let hash = crypto.createHash('sha256').update(uuid()).digest("base64");
+            let hash = uuid();
+            //TODO: make this url configurable
+            let confirmLink = encodeURIComponent(`https://demo-app.rebloc.io:3000/VerificationPage?email=${email}&code=${hash}`);
             let confirmationText = 
                 `<div>
                     <div>
                         <h4>Please verify your email address by clicking the link:</h4>
                     </div>
                     <div>
-                        <a href=${confirmLink}> Verify Email</a>
+                        <a href="${confirmLink}"> Verify Email</a>
+                        <p>Or visit: ${decodeURIComponent(confirmLink)}</p>
                     </div>
                 </div>`
             try { 
