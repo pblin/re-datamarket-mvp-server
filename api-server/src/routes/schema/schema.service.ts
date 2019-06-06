@@ -15,9 +15,11 @@ api_key \
 enc_data_key \
 num_of_records \
 search_terms \
+topic \
 parameters \
 country \
 state_province \
+city \
 price_low \
 price_high \
 pricing_unit \
@@ -275,6 +277,23 @@ export class SchemaService {
         if ( data ['marketplace_field'] !== undefined ) {
             let typeInfo = data ['marketplace_field'];
             return typeInfo;
+        } else {
+            return null; 
+        }
+    }
+    async getAvailableTopics () {
+        const query =  `query  {
+            marketplace_topic (distinct_on: [name] )
+  	        { 
+                  name
+                  description
+            }
+        }`
+        let data = await this.client.request(query);
+        // console.log(data);
+        if ( data ['marketplace_topic'] !== undefined ) {
+            let topicInfo = data ['marketplace_topic'];
+            return topicInfo;
         } else {
             return null; 
         }
