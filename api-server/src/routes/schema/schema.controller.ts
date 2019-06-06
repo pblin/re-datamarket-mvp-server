@@ -123,6 +123,19 @@ router.get('/types', (req, res, next) => {
 })
 });
 
+router.get('/topics', (req, res, next) => {
+    // console.log ('get types')
+    return schemaService.getAvailableTopics().then(topics => {
+      if( topics ==null ) {
+          return res.status(404).send("resource not found");
+      } else {
+          return res.status(200).send(topics)
+      }
+  }).catch(() => {
+      return res.status(500).send("unknown server error."); //TODO: Introduce better error handling
+  })
+  });
+
 router.get('/dataset/sample/:assetid', (req, res, next) => {
   logger.info ('sample for dataset: ' + req.params.assetid);
   return schemaService.previewSample(req.params.assetid).then(datasets => {
