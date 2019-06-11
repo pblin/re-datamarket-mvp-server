@@ -219,14 +219,17 @@ export class ProfileService {
         variables.objects.push(profile);
         logger.info(variables);
 
+        console.log('MADE IT HERE');
         let result; 
         try { 
             result = await this.client.request(query, variables);
         } catch (err) {
             logger.error('graphQL error = ' + err);
+            console.log(err);
             return null;
         } 
         logger.info(result['insert_marketplace_customer']);
+        console.log(result['insert_marketplace_customer']);
         if (result['insert_marketplace_customer'] != null)
             return result['insert_marketplace_customer'].returning[0];
         else 
