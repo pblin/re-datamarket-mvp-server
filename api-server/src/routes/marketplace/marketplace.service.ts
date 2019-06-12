@@ -23,9 +23,11 @@ delivery_method \
 access_url \
 num_of_records \
 search_terms \
+topics \
 parameters \
 country \
 state_province \
+city \
 price_low \
 price_high \
 pricing_unit \
