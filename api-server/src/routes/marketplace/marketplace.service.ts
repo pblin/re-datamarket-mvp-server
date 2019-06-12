@@ -23,7 +23,7 @@ delivery_method \
 access_url \
 num_of_records \
 search_terms \
-topics \
+topic \
 parameters \
 country \
 state_province \
