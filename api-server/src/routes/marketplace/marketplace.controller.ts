@@ -23,8 +23,8 @@ router.get('/', (req, res) => {
             } else {
                 return res.status(200).send(datasets);
             }
-        }).catch(() => {
-             return res.status(500).send("unknown server error"); //TODO: Introduce better error handling
+        }).catch((e) => {
+             return res.status(500).send("unknown server error");
             });
     });
 

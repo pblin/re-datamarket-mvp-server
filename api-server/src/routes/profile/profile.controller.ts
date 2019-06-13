@@ -60,7 +60,7 @@ router.post('/', (req, res) => {
                 return profileService.upsertProfile(profile);
          }).then ((result) => {
             if (result != null)
-                res.send(200);
+                res.send(result);
             else 
                 res.status(500).send("profile update error");
         }).catch((err) => {
