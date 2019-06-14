@@ -13,7 +13,7 @@ const options = {
   };
 const vault = require("node-vault")(options);
 
-let fuzz = require('fuzzball');
+const fuzz = require('fuzzball');
 
 const mktDsCols = 
 "id \
@@ -23,7 +23,7 @@ delivery_method \
 access_url \
 num_of_records \
 search_terms \
-topics \
+topic \
 parameters \
 country \
 state_province \
@@ -103,88 +103,114 @@ export class MarketplaceService {
             return null; 
         }
     }
-    async getDataFields(country:string, region:string, terms:string) {
-        let query =  `query data_fields ($country:String, $region: String) {
-            marketplace_source_of_field (
-              where: { _and:[ 
-                				 {country: { _eq: $country}},
-              					 {region: { _eq: $region}}
-            				]
-            		}
-            	) 
-            {
-              source_id
-              field_label
-              search_terms
-            }
-          }`
+    // async  getDataFields(country:string, region:string, terms:string) { 
+    //     let query =  `query data_fields ($country:String, $region: String) {
+    //         marketplace_source_of_field (
+    //           where: { _and:[ 
+    //             				 {country: { _eq: $country}},
+    //           					 {region: { _eq: $region}}
+    //         				]
+    //         		}
+    //         	) 
+    //         {
+    //           source_id
+    //           field_label
+    //           search_terms
+    //         }
+    //       }`
 
-        let variables = {};
-        if ( country != '' && region != '') {
-            variables = {
-                country,
-                region
-            }
-        } else {
-            if (country != '') {
-                variables = {
-                    country
-                }
-            } else {
-                if (region != '') {
-                    variables = {
-                        region
-                     }
-                }
-            }
-        }
-        // console.log(variables);
-        let data = await this.client.request(query,variables);
+    //     let variables = {};
+    //     if ( country != '' && region != '') {
+    //         variables = {
+    //             country,
+    //             region
+    //         }
+    //     } else {
+    //         if (country != '') {
+    //             variables = {
+    //                 country
+    //             }
+    //         } else {
+    //             if (region != '') {
+    //                 variables = {
+    //                     region
+    //                  }
+    //             }
+    //         }
+    //     }
+    //     // console.log(variables);
+    //     let data = await this.client.request(query,variables);
         
-        let x = 0;
-        let hitList = [];
-        if ( data ['marketplace_source_of_field'] !== undefined ) {
-            let objList = data ['marketplace_source_of_field'];
-            // console.log(objList.length);
-            for (var i = 0; i <  objList.length; i++ ) {
-                let isTermClose = 0;
-                let searchTermList = objList[i]['search_terms'];
-                if (searchTermList != null) {
-                    for (let j in searchTermList ) {
-                        // console.log (searchTermList[j]);
-                        if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
-                                isTermClose = 1; //found a match
-                                break;
+    //     let x = 0;
+    //     let hitList = [];
+    //     if ( data ['marketplace_source_of_field'] !== undefined ) {
+    //         let objList = data ['marketplace_source_of_field'];
+    //         // console.log(objList.length);
+    //         for (var i = 0; i <  objList.length; i++ ) {
+    //             let isTermClose = 0;
+    //             let searchTermList = objList[i]['search_terms'];
+    //             if (searchTermList != null) {
+    //                 for (let j in searchTermList ) {
+    //                     // console.log (searchTermList[j]);
+    //                     if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
+    //                             isTermClose = 1; //found a match
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+    //             if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
+    //                     if ( hitList.indexOf(objList[i]['source_id']) == -1) {
+    //                         hitList.push(objList[i]['source_id']);
+    //                     }
+    //                 }
+    //             }
+    //         }
+        
+    //     query = `query get_source_details ($objects:[String]) {
+    //         marketplace_data_source_detail (
+    //         where: { id: {_in: $objects} }
+    //         ){
+    //         ${mktDsCols}
+    //         }
+    //     }`
+    //     variables = {
+    //         objects: hitList
+    //         }
+    //     logger.info(`hist list = ( ${hitList} )`);
+    //     data = await this.client.request(query,variables);
+        
+    //     if (data['marketplace_data_source_detail'] !== undefined ) {
+    //         return data['marketplace_data_source_detail'];
+    //     } else {
+    //         return null;
+    //     }
+    // }
+    async searchDataset (topics:string,terms:string,cities:string,region:string) {
+        const query =  
+            `query {
+                        marketplace_search_dataset ( 
+                            args: { 
+                                topics: "${topics}", 
+                                terms: "${terms}", 
+                                cities: "${cities}", 
+                                region: "${region}"
                             }
-                        }
+                        )
+                    {
+                        ${mktDsCols}
                     }
-                if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
-                        if ( hitList.indexOf(objList[i]['source_id']) == -1) {
-                            hitList.push(objList[i]['source_id']);
-                        }
-                    }
-                }
-            }
-        
-    query = `query get_source_details ($objects:[String]) {
-        marketplace_data_source_detail (
-          where: { id: {_in: $objects} }
-        ){
-          ${mktDsCols}
+            }`
+        logger.info(query);
+        let data = await this.client.request(query);
+
+        if ( data ['marketplace_search_dataset'] !== undefined ) {
+            return data['marketplace_search_dataset'];
+        } else {
+            return null; 
         }
-      }`
-      variables = {
-          objects: hitList
-        }
-      logger.info(`hist list = ( ${hitList} )`);
-      data = await this.client.request(query,variables);
-      
-      if (data['marketplace_data_source_detail'] !== undefined ) {
-          return data['marketplace_data_source_detail'];
-      } else {
-          return null;
-      }
     }
+
+
     async getAdataset (id: string) {
         const query =  `query datasets ($id: String ) {
             marketplace_data_source_detail 
