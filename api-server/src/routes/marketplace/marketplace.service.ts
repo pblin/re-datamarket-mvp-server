@@ -185,7 +185,7 @@ export class MarketplaceService {
     //         return null;
     //     }
     // }
-    async searchDataset (topics:string,terms:string,cities:string,region:string) {
+    async searchDataset (topics:string,terms:string,cities:string,state:string,country:string) {
         const query =  
             `query {
                         marketplace_search_dataset ( 
@@ -193,7 +193,8 @@ export class MarketplaceService {
                                 topics: "${topics}", 
                                 terms: "${terms}", 
                                 cities: "${cities}", 
-                                region: "${region}"
+                                state: "${state}",
+                                country: "${country}" 
                             }
                         )
                     {
