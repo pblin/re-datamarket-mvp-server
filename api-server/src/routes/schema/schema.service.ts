@@ -4,6 +4,7 @@ import {GraphQLClient} from 'graphql-request';
 const fetch = require('request-promise');
 import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
+const fuzz = require('fuzzball');
 
 const dsCols = 
 "id \
@@ -28,6 +29,7 @@ sample_hash \
 data_hash \
 data_compression \
 json_schema \
+schema \
 date_created \
 date_modified \
 sample_access_url \
@@ -42,18 +44,18 @@ export class SchemaService {
     }
     async saveDataset (ds:any) {
         const mut = `
-        mutation upsert_marketplace_data_source_detail 
-        ($objects:[marketplace_data_source_detail_insert_input!]!) { 
-            insert_marketplace_data_source_detail ( 
-            objects:$objects,
-            on_conflict: { 
-                constraint: data_source_detail_pkey
-                update_columns: [ ${dsCols} ] 
+            mutation upsert_marketplace_data_source_detail 
+            ($objects:[marketplace_data_source_detail_insert_input!]!) { 
+                insert_marketplace_data_source_detail ( 
+                objects:$objects,
+                on_conflict: { 
+                    constraint: data_source_detail_pkey
+                    update_columns: [ ${dsCols} ] 
+                    }
+                ) {
+                    affected_rows
                 }
-            ) {
-                affected_rows
-            }
-        }`;
+            }`;
         let variables = {
             objects: []
             }; 
@@ -264,7 +266,6 @@ export class SchemaService {
             return null; 
         }
     }
-    
     async getAvailableTypes () {
         const query =  `query  {
             marketplace_field (distinct_on: [type] )
@@ -316,4 +317,117 @@ export class SchemaService {
         // console.log(JSON.stringify(response));
         return response;
     }
+    async searchDataset(fields:string,topics:string,cities:string,state:string,country:string) {
+        let query = `
+                query {
+                    marketplace_search_dataset_schema ( 
+                        args: { 
+                            fields: "${fields}", 
+                            topics: "${topics}", 
+                            cities: "${cities}", 
+                            state:  "${state}",
+                            country: "${country}"
+                        }
+                    ) {
+                        dataset_id
+                        dataset_name
+                        field_name
+                        field_type
+                        field_label
+                        field_description
+                    }
+                }` 
+        logger.info (query);
+        let data = await this.client.request(query);
+
+        if ( data ['marketplace_search_dataset_schema'] !== undefined ) {
+            return data['marketplace_search_dataset_schema'];
+        } else {
+            return null; 
+        }
+    }
+
+    // async getDataFields(country:string, region:string, terms:string) {
+    //     let query =  `query data_fields ($country:String, $region: String) {
+    //         marketplace_source_of_field (
+    //           where: { _and:[ 
+    //             				 {country: { _eq: $country}},
+    //           					 {region: { _eq: $region}}
+    //         				]
+    //         		}
+    //         	) 
+    //         {
+    //           source_id
+    //           field_label
+    //           search_terms
+    //         }
+    //       }`
+
+    //     let variables = {};
+    //     if ( country != '' && region != '') {
+    //         variables = {
+    //             country,
+    //             region
+    //         }
+    //     } else {
+    //         if (country != '') {
+    //             variables = {
+    //                 country
+    //             }
+    //         } else {
+    //             if (region != '') {
+    //                 variables = {
+    //                     region
+    //                  }
+    //             }
+    //         }
+    //     }
+    //     // console.log(variables);
+    //     let data = await this.client.request(query,variables);
+        
+    //     let x = 0;
+    //     let hitList = [];
+    //     if ( data ['marketplace_source_of_field'] !== undefined ) {
+    //         let objList = data ['marketplace_source_of_field'];
+    //         // console.log(objList.length);
+    //         for (var i = 0; i <  objList.length; i++ ) {
+    //             let isTermClose = 0;
+    //             let searchTermList = objList[i]['search_terms'];
+    //             if (searchTermList != null) {
+    //                 for (let j in searchTermList ) {
+    //                     // console.log (searchTermList[j]);
+    //                     if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
+    //                             isTermClose = 1; //found a match
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+    //             if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
+    //                     if ( hitList.indexOf(objList[i]['source_id']) == -1) {
+    //                         hitList.push(objList[i]['source_id']);
+    //                     }
+    //                 }
+    //             }
+    //         }
+                
+    //         query = `query get_source_details ($objects:[String]) {
+    //             marketplace_data_source_detail (
+    //             where: { id: {_in: $objects} }
+    //             ){
+    //             ${dsCols}
+    //             }
+    //         }`
+    //         variables = {
+    //             objects: hitList
+    //             }
+    //         logger.info(`hist list = ( ${hitList} )`);
+    //         data = await this.client.request(query,variables);
+            
+    //         if (data['marketplace_data_source_detail'] !== undefined ) {
+    //             return data['marketplace_data_source_detail'];
+    //         } else {
+    //             return null;
+    //         }
+    // }
+
 }

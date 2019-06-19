@@ -41,27 +41,38 @@ router.get('/dataset/:assetid', (req, res, next) => {
 });
 
 router.get('/search', (req, res) => {
-    let country = '';
-    let region = '';
     let terms = '';
-    if (req.query.country !== undefined) {
-        country = req.query.country.toLowerCase();
-    }
-    if (req.query.region !== undefined) {
-        region = req.query.region.toLowerCase();
-    }
-    if (req.query.terms !== undefined) {
-        terms = req.query.terms.toLowerCase();
-    } else {
-        return res.status(404).send("no search terms")
-    }
-    return marketplaceService.getDataFields(country, region, terms).then (datasets => {
+    let cities = '';
+    let topics = '';
+    let state = '';
+    let country='';
+
+    if (req.query.terms != undefined) 
+        terms = req.query.terms;
+    
+    if (req.query.topics != undefined) 
+        topics = req.query.topics;
+    
+    if (req.query.cities != undefined) 
+        cities = req.query.cities;
+    
+    if (req.query.state != undefined) 
+        state = req.query.state;
+   
+    if (req.query.country != undefined) 
+        country = req.query.country;
+
+    
+    if ( terms == '' && cities == '' && topics == '' && state == '' && country == '')
+        return res.status(404).send("no search criteria")
+    return marketplaceService.searchDataset(topics,terms,cities,state,country).then (datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {
                 return res.status(200).send(datasets);
             }
-        }).catch(() => {
+        }).catch((err) => {
+            logger.error(`marketplace search dataset error: ${err}`);
             return res.status(500).send("unknown server error"); 
         });
   });
