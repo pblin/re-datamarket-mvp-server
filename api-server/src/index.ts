@@ -13,9 +13,11 @@ import { HTTPS_ON, KEY_PASS, SSL_PFX, SSL_KEY, SSL_CERT } from './config/ConfigE
 import * as https from 'https';
 import * as http from 'http';
 import * as fs from 'fs';
+import { LogService } from './utils/logger';
+const logger = new LogService().getLogger();
 
 
-app.use(function(req,res,next){console.log(req.method,req.url); next();});
+app.use(function(req,res,next) { logger.info(req.method,req.url); next();} );
 app.use(cors());
 app.use(bodyParser.json());
 app.use(methodOverride('_method'));
@@ -49,12 +51,12 @@ if (HTTPS_ON == 'YES') {
     }
     let httpsServer = https.createServer(credentials, app);
     httpsServer.listen(9000);
-    console.log(`API on https port 9000.`);
+    logger.info(`API on https port 9000.`);
 
   } else { 
     let httpServer = http.createServer(app);
     httpServer.listen(9000);
-    console.log(`API on http port 9000.`);
+    logger.info(`API on http port 9000.`);
 }
 
 // app.listen(PORT, () => {
