@@ -193,8 +193,8 @@ export class MarketplaceService {
                                 topics: "${topics}", 
                                 terms: "${terms}", 
                                 cities: "${cities}", 
-                                state: "${state}",
-                                country: "${country}" 
+                                region: "${state}",
+                                ctn: "${country}" 
                             }
                         )
                     {

@@ -317,7 +317,7 @@ export class SchemaService {
         // console.log(JSON.stringify(response));
         return response;
     }
-    async searchDataset(fields:string,topics:string,cities:string,state:string,country:string) {
+    async searchDataset(fields:string,topics:string,cities:string,region:string,country:string) {
         let query = `
                 query {
                     marketplace_search_dataset_schema ( 
@@ -325,8 +325,8 @@ export class SchemaService {
                             fields: "${fields}", 
                             topics: "${topics}", 
                             cities: "${cities}", 
-                            state:  "${state}",
-                            country: "${country}"
+                            region:  "${region}",
+                            ctn: "${country}"
                         }
                     ) {
                         dataset_id
