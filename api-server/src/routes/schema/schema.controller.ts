@@ -135,6 +135,7 @@ router.get('/search', (req, res) => {
     let cities = '';
     let state = '';
     let country = '';
+    let purchased_by = 0;
 
     if (req.query.fields!= undefined) 
         fields = req.query.fields;
@@ -151,10 +152,13 @@ router.get('/search', (req, res) => {
     if (req.query.country != undefined) 
         country = req.query.country;
 
-    if (fields == '' && cities == '' && topics == '' && state == '' && country == '' )
+    if (req.query.purchased_by != undefined) 
+        purchased_by = req.query.purchased_by;
+
+    if (fields == '' && cities == '' && topics == '' && state == '' && country == '' && purchased_by==0)
         return res.status(404).send("no search criteria")
 
-    return schemaService.searchDataset(fields,topics,cities,state,country).then(datasets => {
+    return schemaService.searchDataset(fields,topics,cities,state,country,purchased_by).then(datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {
