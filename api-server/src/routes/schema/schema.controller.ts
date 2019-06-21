@@ -155,7 +155,7 @@ router.get('/search', (req, res) => {
     if (req.query.purchased_by != undefined) 
         purchased_by = req.query.purchased_by;
 
-    if (fields == '' && cities == '' && topics == '' && state == '' && country == '' )
+    if (fields == '' && cities == '' && topics == '' && state == '' && country == '' && purchased_by==0)
         return res.status(404).send("no search criteria")
 
     return schemaService.searchDataset(fields,topics,cities,state,country,purchased_by).then(datasets => {

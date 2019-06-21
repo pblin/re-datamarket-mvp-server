@@ -46,6 +46,7 @@ router.get('/search', (req, res) => {
     let topics = '';
     let state = '';
     let country='';
+    let purchased_by = 0;
 
     if (req.query.terms != undefined) 
         terms = req.query.terms;
@@ -61,11 +62,14 @@ router.get('/search', (req, res) => {
    
     if (req.query.country != undefined) 
         country = req.query.country;
+    
+    if (req.query.purchased_by != undefined) 
+        purchased_by = req.query.purchased_by;
 
     
-    if ( terms == '' && cities == '' && topics == '' && state == '' && country == '')
+    if ( terms == '' && cities == '' && topics == '' && state == '' && country == '' && purchased_by == 0)
         return res.status(404).send("no search criteria")
-    return marketplaceService.searchDataset(topics,terms,cities,state,country).then (datasets => {
+    return marketplaceService.searchDataset(topics,terms,cities,state,country,purchased_by).then (datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {
