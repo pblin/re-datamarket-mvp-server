@@ -133,7 +133,8 @@ router.get('/search', (req, res) => {
     let fields = '';
     let topics = '';
     let cities = '';
-    let region = '';
+    let state = '';
+    let country = '';
 
     if (req.query.fields!= undefined) 
         fields = req.query.fields;
@@ -144,13 +145,16 @@ router.get('/search', (req, res) => {
     if (req.query.cities != undefined)
         cities = req.query.cities;
     
-        if (req.query.region != undefined) 
-        region = req.query.region;
+    if (req.query.state != undefined) 
+        state = req.query.state;
     
-    if (!fields && !cities && !topics && !region )
+    if (req.query.country != undefined) 
+        country = req.query.country;
+
+    if (fields == '' && cities == '' && topics == '' && state == '' && country == '' )
         return res.status(404).send("no search criteria")
 
-    return schemaService.searchDataset(fields,topics,cities,region).then(datasets => {
+    return schemaService.searchDataset(fields,topics,cities,state,country).then(datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {

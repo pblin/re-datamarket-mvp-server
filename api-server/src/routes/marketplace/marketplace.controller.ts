@@ -41,14 +41,12 @@ router.get('/dataset/:assetid', (req, res, next) => {
 });
 
 router.get('/search', (req, res) => {
-    let region = '';
     let terms = '';
     let cities = '';
     let topics = '';
+    let state = '';
+    let country='';
 
-    if (req.query.region != undefined) 
-        region = req.query.region;
-    
     if (req.query.terms != undefined) 
         terms = req.query.terms;
     
@@ -56,11 +54,18 @@ router.get('/search', (req, res) => {
         topics = req.query.topics;
     
     if (req.query.cities != undefined) 
-        topics = req.query.cities;
+        cities = req.query.cities;
     
-    if (region == '' && terms == '' && cities == '' && topics == '')
+    if (req.query.state != undefined) 
+        state = req.query.state;
+   
+    if (req.query.country != undefined) 
+        country = req.query.country;
+
+    
+    if ( terms == '' && cities == '' && topics == '' && state == '' && country == '')
         return res.status(404).send("no search criteria")
-    return marketplaceService.searchDataset(topics,terms,cities,region).then (datasets => {
+    return marketplaceService.searchDataset(topics,terms,cities,state,country).then (datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {
