@@ -325,8 +325,8 @@ export class SchemaService {
                             fields: "${fields}", 
                             topics: "${topics}", 
                             cities: "${cities}", 
-                            state:  "${state}",
-                            country: "${country}"
+                            region:  "${state}",
+                            ctn: "${country}"
                         }
                     ) {
                         dataset_id
