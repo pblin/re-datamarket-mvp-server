@@ -317,7 +317,7 @@ export class SchemaService {
         // console.log(JSON.stringify(response));
         return response;
     }
-    async searchDataset(fields:string,topics:string,cities:string,region:string,country:string) {
+    async searchDataset(fields:string,topics:string,cities:string,region:string,country:string,purchased_by:number) {
         let query = `
                 query {
                     marketplace_search_dataset_schema ( 
@@ -326,7 +326,8 @@ export class SchemaService {
                             topics: "${topics}", 
                             cities: "${cities}", 
                             region:  "${region}",
-                            ctn: "${country}"
+                            ctn: "${country}",
+                            purchased_by: ${purchased_by}
                         }
                     ) {
                         dataset_id
@@ -335,6 +336,7 @@ export class SchemaService {
                         field_type
                         field_label
                         field_description
+                        dataset_owner_id
                     }
                 }` 
         logger.info (query);
