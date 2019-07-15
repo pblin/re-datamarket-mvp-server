@@ -47,29 +47,34 @@ router.get('/search', (req, res) => {
     let state = '';
     let country='';
     let purchased_by = 0;
-
+    let op = 'and';
+   
     if (req.query.terms != undefined) 
-        terms = req.query.terms;
+        terms = req.query.terms.toLowerCase();
     
     if (req.query.topics != undefined) 
-        topics = req.query.topics;
+        topics = req.query.topics.toLowerCase();
     
     if (req.query.cities != undefined) 
-        cities = req.query.cities;
+        cities = req.query.cities.toLowerCase();
     
     if (req.query.state != undefined) 
-        state = req.query.state;
+        state = req.query.state.toLowerCase();
    
     if (req.query.country != undefined) 
-        country = req.query.country;
+        country = req.query.country.toLowerCase();
     
     if (req.query.purchased_by != undefined) 
         purchased_by = req.query.purchased_by;
 
-    
+    if (req.query.op != undefined) {
+        if (req.query.op.toLowerCase() != 'and')
+            op = req.query.op.toLowerCase();
+    }
+
     if ( terms == '' && cities == '' && topics == '' && state == '' && country == '' && purchased_by == 0)
         return res.status(404).send("no search criteria")
-    return marketplaceService.searchDataset(topics,terms,cities,state,country,purchased_by).then (datasets => {
+    return marketplaceService.searchDataset(topics,terms,cities,state,country,purchased_by,op).then (datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {

@@ -185,7 +185,171 @@ export class MarketplaceService {
     //         return null;
     //     }
     // }
-    async searchDataset (topics:string,terms:string,cities:string,state:string,country:string,purchased_by:number) {
+    filterCountry (toFilter:any,country:string) 
+    {
+        for (let i=0; i < toFilter.length; i++)
+            if (toFilter[i]['country'] != country)
+                delete toFilter[i];
+    }
+
+    filterState (toFilter:any,state:string) 
+    {
+
+        for (let i=0; i < toFilter.length; i++)
+        if (toFilter[i]['state'] != state)
+            delete toFilter[i];
+    }
+
+    filterCity (toFilter:any,cities:string) 
+    {
+        let cityArray = cities.split(',');
+        let i = 0;
+        let match = false;
+        for ( ;i < toFilter.length; i++) {
+            for (let city in cityArray)
+                match = match || toFilter[i]['city'].includes(city);
+
+            if (!match)  // no match in any the cities
+                delete toFilter[i];
+            else  // found match reset for next item
+                match = false; 
+        }
+    }
+
+    filterTopic (toFilter:any,topics:string) 
+    {
+        console.log('filter topic');
+        let topicArray = topics.split(',');
+        console.log(topicArray);
+        let i = 0;
+        let match = false;
+        for ( ;i < toFilter.length; i++) {
+            for (let j = 0; j < topicArray.length; j++) {
+                let topic = topicArray[j];
+                // console.log(topic);
+                match = match || toFilter[i]['topic'].includes(topic);
+            }
+
+            if (!match)  // no match in any the topics
+                delete toFilter[i];
+            else  // found match reset for next item
+                match = false; 
+        }
+    }
+    findIndex(items:any,name:string){
+        let found = -1;
+        for (let i=0; i < items.length; i++)
+            if (name == items[i]['name']) {
+                found = i;
+                break;
+            }
+        return found;
+    }
+    factsets (result:any) {
+        let summary = {
+            "country":[],
+            "state":[],
+            "city":[],
+            "topic":[],
+        }
+        try {
+            for (let j=0; j < result.length; j++) {
+                let item = result[j];
+                // console.log(item);
+                // country
+                let i = -1;
+                if (summary.country.length == 0)   
+                    summary.country.push(
+                            {
+                                "name":item['country'],
+                                "count": 1
+                            });
+                else { 
+                    i = this.findIndex(summary.country,item['country']);
+                    if (i  < 0)
+                        summary.country.push(
+                            {
+                                "name":item['country'],
+                                "count": 1
+                            });
+                    else 
+                        summary.country[i]['count'] += 1;
+                }
+                // state
+                if (summary.state.length == 0) 
+                    summary.state.push(
+                        {
+                            "name":item['state_province'],
+                            "count": 1
+                        });
+                else {
+                    i = this.findIndex(summary.state,item['state_province']);
+                    if (i < 0)
+                        summary.state.push(
+                            {
+                                "name":item['state_province'],
+                                "count": 1
+                            });
+                    else 
+                        summary.state[i]['count'] += 1;
+                }
+                
+                // city is an array in result 
+                for ( let k =0; k < item['city'].length; k++) {
+                    let c = item['city'][k];
+                    if ( summary.city.length == 0)
+                        summary.city.push(
+                            {
+                                "name": c,
+                                "count": 1
+                                });
+                    else {
+                        i = this.findIndex(summary.city,c);
+                        if ( i  >= 0)
+                            summary.city[i]['count'] += 1;
+                        else 
+                            summary.city.push(
+                                    {
+                                        "name": c,
+                                        "count": 1
+                                    });
+                    }
+                } 
+                // topic is an array in result 
+                for ( let k=0; k < item['topic'].length; k++) {
+                    let t = item['topic'][k];
+                    if ( summary.topic.length == 0)
+                        summary.topic.push(
+                            {
+                                "name": t,
+                                "count": 1
+                                });
+                    else {
+                        i = this.findIndex(summary.topic,t);
+                        if ( i  >= 0)
+                            summary.topic[i]['count'] += 1;
+                        else 
+                            summary.topic.push(
+                                    {
+                                        "name": t,
+                                        "count": 1
+                                    });
+                        }
+                    }
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        console.log(summary);
+        return summary;
+    }
+    async searchDataset (topics:string,
+                         terms:string,
+                         cities:string,
+                         state:string,
+                         country:string,
+                         purchased_by:number,
+                         op:string) {
         const query =  
             `query {
                         marketplace_search_dataset ( 
@@ -205,13 +369,33 @@ export class MarketplaceService {
         logger.info(query);
         let data = await this.client.request(query);
 
-        if ( data ['marketplace_search_dataset'] !== undefined ) {
-            return data['marketplace_search_dataset'];
+        if ( data['marketplace_search_dataset'] !== undefined ) {
+            let result = data['marketplace_search_dataset'];
+    
+            if (op == 'or') {
+                    if (country.length > 0) 
+                        this.filterCountry(result,country);
+                    if (state.length > 0) 
+                        this.filterState(result,state);
+                    if (cities.length > 0) 
+                        this.filterCity(result,cities);
+                    if (topics.length > 0) 
+                        this.filterTopic(result,topics);
+            }
+            let factsets = null;
+            if (result.length > 0) {
+                 factsets = this.factsets(result);
+            }
+           
+            let response = {
+                "factsets": factsets,
+                "datasets": result
+            };
+            return response; 
         } else {
             return null; 
         }
     }
-
 
     async getAdataset (id: string) {
         const query =  `query datasets ($id: String ) {
