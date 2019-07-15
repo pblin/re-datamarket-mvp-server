@@ -185,57 +185,57 @@ export class MarketplaceService {
     //         return null;
     //     }
     // }
-    filterCountry (toFilter:any,country:string) 
-    {
-        for (let i=0; i < toFilter.length; i++)
-            if (toFilter[i]['country'] != country)
-                delete toFilter[i];
-    }
+    // filterCountry (toFilter:any,country:string) 
+    // {
+    //     for (let i=0; i < toFilter.length; i++)
+    //         if (toFilter[i]['country'] != country)
+    //             delete toFilter[i];
+    // }
 
-    filterState (toFilter:any,state:string) 
-    {
+    // filterState (toFilter:any,state:string) 
+    // {
 
-        for (let i=0; i < toFilter.length; i++)
-        if (toFilter[i]['state'] != state)
-            delete toFilter[i];
-    }
+    //     for (let i=0; i < toFilter.length; i++)
+    //     if (toFilter[i]['state'] != state)
+    //         delete toFilter[i];
+    // }
 
-    filterCity (toFilter:any,cities:string) 
-    {
-        let cityArray = cities.split(',');
-        let i = 0;
-        let match = false;
-        for ( ;i < toFilter.length; i++) {
-            for (let city in cityArray)
-                match = match || toFilter[i]['city'].includes(city);
+    // filterCity (toFilter:any,cities:string) 
+    // {
+    //     let cityArray = cities.split(',');
+    //     let i = 0;
+    //     let match = false;
+    //     for ( ;i < toFilter.length; i++) {
+    //         for (let city in cityArray)
+    //             match = match || toFilter[i]['city'].includes(city);
 
-            if (!match)  // no match in any the cities
-                delete toFilter[i];
-            else  // found match reset for next item
-                match = false; 
-        }
-    }
+    //         if (!match)  // no match in any the cities
+    //             delete toFilter[i];
+    //         else  // found match reset for next item
+    //             match = false; 
+    //     }
+    // }
 
-    filterTopic (toFilter:any,topics:string) 
-    {
-        console.log('filter topic');
-        let topicArray = topics.split(',');
-        console.log(topicArray);
-        let i = 0;
-        let match = false;
-        for ( ;i < toFilter.length; i++) {
-            for (let j = 0; j < topicArray.length; j++) {
-                let topic = topicArray[j];
-                // console.log(topic);
-                match = match || toFilter[i]['topic'].includes(topic);
-            }
+    // filterTopic (toFilter:any,topics:string) 
+    // {
+    //     console.log('filter topic');
+    //     let topicArray = topics.split(',');
+    //     console.log(topicArray);
+    //     let i = 0;
+    //     let match = false;
+    //     for ( ;i < toFilter.length; i++) {
+    //         for (let j = 0; j < topicArray.length; j++) {
+    //             let topic = topicArray[j];
+    //             // console.log(topic);
+    //             match = match || toFilter[i]['topic'].includes(topic);
+    //         }
 
-            if (!match)  // no match in any the topics
-                delete toFilter[i];
-            else  // found match reset for next item
-                match = false; 
-        }
-    }
+    //         if (!match)  // no match in any the topics
+    //             delete toFilter[i];
+    //         else  // found match reset for next item
+    //             match = false; 
+    //     }
+    // }
     findIndex(items:any,name:string){
         let found = -1;
         for (let i=0; i < items.length; i++)
@@ -372,16 +372,6 @@ export class MarketplaceService {
         if ( data['marketplace_search_dataset'] !== undefined ) {
             let result = data['marketplace_search_dataset'];
     
-            if (op == 'or') {
-                    if (country.length > 0) 
-                        this.filterCountry(result,country);
-                    if (state.length > 0) 
-                        this.filterState(result,state);
-                    if (cities.length > 0) 
-                        this.filterCity(result,cities);
-                    if (topics.length > 0) 
-                        this.filterTopic(result,topics);
-            }
             let factsets = null;
             if (result.length > 0) {
                  factsets = this.factsets(result);
