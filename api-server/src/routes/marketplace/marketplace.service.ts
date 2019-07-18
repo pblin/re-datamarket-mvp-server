@@ -1,9 +1,12 @@
 import {Db} from '../../db/Db';
 import {GraphQLClient} from 'graphql-request';
 import * as Queue from 'bee-queue';
-import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT } from '../../config/ConfigEnv';
+import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT, 
+         AZURE_TEXT_ANAL_KEY, AZURE_TEXT_ANALYTICS } from '../../config/ConfigEnv';
+
 import * as uuidv4 from 'uuid/v4';
 import { LogService } from '../../utils/logger';
+// import { listenerCount } from 'cluster';
 const logger = new LogService().getLogger();
 
 const options = {
@@ -12,9 +15,9 @@ const options = {
     token:  VAULT_CLIENT_TOKEN // optional client token; 
   };
 const vault = require("node-vault")(options);
+const request = require('request-promise');
 
-const fuzz = require('fuzzball');
-
+// const fuzz = require('fuzzball');
 const mktDsCols = 
 "id \
 name \
@@ -343,6 +346,79 @@ export class MarketplaceService {
         console.log(summary);
         return summary;
     }
+    async processSearchTerms(terms:string) {
+        const entities_api_loc = AZURE_TEXT_ANALYTICS + '/entities';
+        const phrase_api_loc = AZURE_TEXT_ANALYTICS + '/KeyPhrases';
+       
+        let new_terms = terms.replace(/,/g, ' ');
+
+        let payload = {
+             "documents": [ 
+                {
+                    "id": "1",
+                    "language": "en",
+                    "text": new_terms
+                }]
+            };
+
+        let options = {
+            method: 'POST',
+            headers: {
+                'Content-Type':'application/json',
+                'Ocp-Apim-Subscription-Key': AZURE_TEXT_ANAL_KEY,
+                'Accept':'application/json'
+            },
+            body: JSON.stringify(payload)
+        };
+        console.log("input:"+new_terms);
+        try {
+            logger.info(entities_api_loc);
+            logger.info(options);
+            let response = await request(entities_api_loc,options);
+            logger.info(response);
+            let data = JSON.parse(response);
+            let token = data['documents'][0]['entities'];
+            logger.info("entities:" + token);
+
+            let terms_for_key_phrases;
+            for (let i=0; i<token.length; i++) {
+                    let inject = token[i]['name'].replace(/ /g,'<1>');
+                    logger.info("entities inject->"+inject);
+                    let re = new RegExp(token[i]['name'], 'g');
+                    new_terms = new_terms.replace(re, inject);
+                    re = new RegExp(inject, 'g');
+                    terms_for_key_phrases = new_terms.replace(re,''); // take out known entities
+                    logger.info("to be check for key phrases:" + terms_for_key_phrases);
+                }
+            
+            logger.info(phrase_api_loc);
+            payload.documents[0].text = terms_for_key_phrases;
+            options.body = JSON.stringify(payload);
+            logger.info(options);
+            response = await request(phrase_api_loc,options);
+            logger.info(response);
+            data = JSON.parse(response);
+            token = data['documents'][0]['keyPhrases'];
+            logger.info("key phrases:" + token);
+          
+            for (let i=0; i<token.length; i++) {
+                let inject = token[i].replace(/ /g,'<1>');
+                logger.info("inject->"+inject);
+                let re = new RegExp(token[i], 'g');
+                new_terms = new_terms.replace(re,inject);
+                logger.info(new_terms);
+            }
+
+            new_terms = new_terms.trim();
+            new_terms = new_terms.replace(/ /g,'&');
+            console.log("post process terms:" + new_terms);
+            logger.info("post processed terms:" + new_terms);
+
+         } catch (err) {
+            logger.error(err)
+        }
+        return new_terms;
+    }
     async searchDataset (topics:string,
                          terms:string,
                          cities:string,
@@ -350,12 +426,15 @@ export class MarketplaceService {
                          country:string,
                          purchased_by:number,
                          op:string) {
+        
+                            
+        let tokenized_terms = await this.processSearchTerms(terms);
         const query =  
             `query {
                         marketplace_search_dataset ( 
                             args: { 
                                 topics: "${topics}", 
-                                terms: "${terms}", 
+                                terms: "${tokenized_terms}", 
                                 cities: "${cities}", 
                                 region: "${state}",
                                 ctn: "${country}",
