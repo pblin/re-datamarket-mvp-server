@@ -479,7 +479,8 @@ export class SchemaService {
 
     async searchDataset(fields:string,topics:string,cities:string,region:string,country:string,purchased_by:number,op:string) {
         fields = fields.replace(/,/g,'|');
-        fields = fields.replace(/' '/g,'|');
+        fields = fields.replace(/ /g,'|');
+        console.log ("fields="+fields);
         let query = `
                 query {
                     marketplace_search_dataset_schema ( 
