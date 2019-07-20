@@ -437,7 +437,7 @@ export class MarketplaceService {
                                 terms: "${tokenized_terms}", 
                                 cities: "${cities}", 
                                 region: "${state}",
-                                ctn: "${country}",
+                                cn: "${country}",
                                 purchased_by: ${purchased_by}
                             }
                         )
