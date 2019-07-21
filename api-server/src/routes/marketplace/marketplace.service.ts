@@ -106,88 +106,7 @@ export class MarketplaceService {
             return null; 
         }
     }
-    // async  getDataFields(country:string, region:string, terms:string) { 
-    //     let query =  `query data_fields ($country:String, $region: String) {
-    //         marketplace_source_of_field (
-    //           where: { _and:[ 
-    //             				 {country: { _eq: $country}},
-    //           					 {region: { _eq: $region}}
-    //         				]
-    //         		}
-    //         	) 
-    //         {
-    //           source_id
-    //           field_label
-    //           search_terms
-    //         }
-    //       }`
-
-    //     let variables = {};
-    //     if ( country != '' && region != '') {
-    //         variables = {
-    //             country,
-    //             region
-    //         }
-    //     } else {
-    //         if (country != '') {
-    //             variables = {
-    //                 country
-    //             }
-    //         } else {
-    //             if (region != '') {
-    //                 variables = {
-    //                     region
-    //                  }
-    //             }
-    //         }
-    //     }
-    //     // console.log(variables);
-    //     let data = await this.client.request(query,variables);
-        
-    //     let x = 0;
-    //     let hitList = [];
-    //     if ( data ['marketplace_source_of_field'] !== undefined ) {
-    //         let objList = data ['marketplace_source_of_field'];
-    //         // console.log(objList.length);
-    //         for (var i = 0; i <  objList.length; i++ ) {
-    //             let isTermClose = 0;
-    //             let searchTermList = objList[i]['search_terms'];
-    //             if (searchTermList != null) {
-    //                 for (let j in searchTermList ) {
-    //                     // console.log (searchTermList[j]);
-    //                     if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
-    //                             isTermClose = 1; //found a match
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-    //             if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
-    //                     if ( hitList.indexOf(objList[i]['source_id']) == -1) {
-    //                         hitList.push(objList[i]['source_id']);
-    //                     }
-    //                 }
-    //             }
-    //         }
-        
-    //     query = `query get_source_details ($objects:[String]) {
-    //         marketplace_data_source_detail (
-    //         where: { id: {_in: $objects} }
-    //         ){
-    //         ${mktDsCols}
-    //         }
-    //     }`
-    //     variables = {
-    //         objects: hitList
-    //         }
-    //     logger.info(`hist list = ( ${hitList} )`);
-    //     data = await this.client.request(query,variables);
-        
-    //     if (data['marketplace_data_source_detail'] !== undefined ) {
-    //         return data['marketplace_data_source_detail'];
-    //     } else {
-    //         return null;
-    //     }
-    // }
+   
     // filterCountry (toFilter:any,country:string) 
     // {
     //     for (let i=0; i < toFilter.length; i++)
@@ -248,24 +167,25 @@ export class MarketplaceService {
             }
         return found;
     }
-    factsets (result:any) {
+    geoFactsets (result:any) {
         let summary = {
             "country":[],
             "state":[],
-            "city":[],
-            "topic":[],
+            "city":[]
         }
+
         try {
             for (let j=0; j < result.length; j++) {
                 let item = result[j];
                 // console.log(item);
                 // country
                 let i = -1;
-                if (summary.country.length == 0)   
+                if (summary.country.length == 0 && item['country'] != null)   
                     summary.country.push(
                             {
                                 "name":item['country'],
-                                "count": 1
+                                "count": 1,
+                                "datasetIndex": [j]
                             });
                 else { 
                     i = this.findIndex(summary.country,item['country']);
@@ -273,17 +193,21 @@ export class MarketplaceService {
                         summary.country.push(
                             {
                                 "name":item['country'],
-                                "count": 1
+                                "count": 1,
+                                "datasetIndex": [j]
                             });
-                    else 
+                    else {
                         summary.country[i]['count'] += 1;
+                        summary.country[i]['datasetIndex'].push(j);
+                    }
                 }
                 // state
-                if (summary.state.length == 0) 
+                if (summary.state.length == 0 && item['state_province'] != null) 
                     summary.state.push(
                         {
                             "name":item['state_province'],
-                            "count": 1
+                            "count": 1,
+                            "datasetIndex": [j]
                         });
                 else {
                     i = this.findIndex(summary.state,item['state_province']);
@@ -291,59 +215,82 @@ export class MarketplaceService {
                         summary.state.push(
                             {
                                 "name":item['state_province'],
-                                "count": 1
+                                "count": 1,
+                                "datasetIndex": [j]
                             });
-                    else 
+                    else {
                         summary.state[i]['count'] += 1;
+                        summary.state[i]['datasetIndex'].push(j);
+                    }
                 }
                 
                 // city is an array in result 
                 for ( let k =0; k < item['city'].length; k++) {
                     let c = item['city'][k];
-                    if ( summary.city.length == 0)
+                    if ( summary.city.length == 0 && c != null && c != '')
                         summary.city.push(
                             {
                                 "name": c,
-                                "count": 1
-                                });
+                                "count": 1,
+                                "datasetIndex": [j]
+                            });
                     else {
                         i = this.findIndex(summary.city,c);
-                        if ( i  >= 0)
+                        if ( i  >= 0) {
                             summary.city[i]['count'] += 1;
+                            summary.city[i]['datasetIndex'].push(j)
+                        }
                         else 
                             summary.city.push(
                                     {
                                         "name": c,
-                                        "count": 1
+                                        "count": 1,
+                                        "datasetIndex": [j]
                                     });
                     }
                 } 
-                // topic is an array in result 
-                for ( let k=0; k < item['topic'].length; k++) {
-                    let t = item['topic'][k];
-                    if ( summary.topic.length == 0)
-                        summary.topic.push(
-                            {
-                                "name": t,
-                                "count": 1
-                                });
-                    else {
-                        i = this.findIndex(summary.topic,t);
-                        if ( i  >= 0)
-                            summary.topic[i]['count'] += 1;
-                        else 
-                            summary.topic.push(
-                                    {
-                                        "name": t,
-                                        "count": 1
-                                    });
-                        }
-                    }
             }
         } catch (err) {
             console.log(err);
         }
-        console.log(summary);
+        console.log(JSON.stringify(summary));
+        return summary;
+    }
+
+    topicFactsets (result:any) {
+        let summary = {
+            topic:[]
+        }
+        for (let j=0; j < result.length; j++) {
+            let item = result[j];
+            let i = -1;
+        // topic is an array in result 
+            for ( let k=0; k < item['topic'].length; k++) {
+                let t = item['topic'][k];
+                if (summary.topic.length == 0 && t != null && t != '' )
+                    summary.topic.push(
+                        {
+                            "name": t,
+                            "count": 1,
+                            "datasetIndex": [j]
+                        });
+                else {
+                    i = this.findIndex(summary.topic,t);
+                    if ( i  >= 0) {
+                        summary.topic[i]['count'] += 1;
+                        summary.topic[i]['datasetIndex'].push(j);
+                    }
+                    else 
+                        summary.topic.push(
+                                {
+                                    "name": t,
+                                    "count": 1,
+                                    "datasetIndex": [j]
+                                });
+                    }
+                }
+            }
+        console.log(JSON.stringify(summary));
         return summary;
     }
     async processSearchTerms(terms:string) {
@@ -370,7 +317,7 @@ export class MarketplaceService {
             },
             body: JSON.stringify(payload)
         };
-        console.log("input:"+new_terms);
+        // console.log("input:"+new_terms);
         try {
             logger.info(entities_api_loc);
             logger.info(options);
@@ -450,17 +397,17 @@ export class MarketplaceService {
 
         if ( data['marketplace_search_dataset'] !== undefined ) {
             let result = data['marketplace_search_dataset'];
-    
-            let factsets = null;
-            if (result.length > 0) {
-                 factsets = this.factsets(result);
-            }
-           
             let response = {
-                "factsets": factsets,
+                "geoFactsets": null,
+                "topicFactsets":null,
                 "datasets": result
             };
+            if (result.length > 0) {
+                 response.geoFactsets = this.geoFactsets(result);
+                 response.topicFactsets = this.topicFactsets(result);
+            }
             return response; 
+
         } else {
             return null; 
         }
@@ -559,4 +506,87 @@ export class MarketplaceService {
             return null; 
         }
     }
+
+    // async  getDataFields(country:string, region:string, terms:string) { 
+    //     let query =  `query data_fields ($country:String, $region: String) {
+    //         marketplace_source_of_field (
+    //           where: { _and:[ 
+    //             				 {country: { _eq: $country}},
+    //           					 {region: { _eq: $region}}
+    //         				]
+    //         		}
+    //         	) 
+    //         {
+    //           source_id
+    //           field_label
+    //           search_terms
+    //         }
+    //       }`
+
+    //     let variables = {};
+    //     if ( country != '' && region != '') {
+    //         variables = {
+    //             country,
+    //             region
+    //         }
+    //     } else {
+    //         if (country != '') {
+    //             variables = {
+    //                 country
+    //             }
+    //         } else {
+    //             if (region != '') {
+    //                 variables = {
+    //                     region
+    //                  }
+    //             }
+    //         }
+    //     }
+    //     // console.log(variables);
+    //     let data = await this.client.request(query,variables);
+        
+    //     let x = 0;
+    //     let hitList = [];
+    //     if ( data ['marketplace_source_of_field'] !== undefined ) {
+    //         let objList = data ['marketplace_source_of_field'];
+    //         // console.log(objList.length);
+    //         for (var i = 0; i <  objList.length; i++ ) {
+    //             let isTermClose = 0;
+    //             let searchTermList = objList[i]['search_terms'];
+    //             if (searchTermList != null) {
+    //                 for (let j in searchTermList ) {
+    //                     // console.log (searchTermList[j]);
+    //                     if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
+    //                             isTermClose = 1; //found a match
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+    //             if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
+    //                     if ( hitList.indexOf(objList[i]['source_id']) == -1) {
+    //                         hitList.push(objList[i]['source_id']);
+    //                     }
+    //                 }
+    //             }
+    //         }
+        
+    //     query = `query get_source_details ($objects:[String]) {
+    //         marketplace_data_source_detail (
+    //         where: { id: {_in: $objects} }
+    //         ){
+    //         ${mktDsCols}
+    //         }
+    //     }`
+    //     variables = {
+    //         objects: hitList
+    //         }
+    //     logger.info(`hist list = ( ${hitList} )`);
+    //     data = await this.client.request(query,variables);
+        
+    //     if (data['marketplace_data_source_detail'] !== undefined ) {
+    //         return data['marketplace_data_source_detail'];
+    //     } else {
+    //         return null;
+    //     }
+    // }
 }
