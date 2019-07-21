@@ -45,7 +45,7 @@ router.get('/search', (req, res) => {
     let cities = '';
     let topics = '';
     let region = '';
-    let country='';
+    let country = '';
     let purchased_by = 0;
     let op = 'and';
    

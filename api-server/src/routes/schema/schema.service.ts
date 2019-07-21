@@ -377,24 +377,25 @@ export class SchemaService {
             }
         return found;
     }
-    factsets (result:any) {
+    geoFactsets (result:any) {
         let summary = {
             "country":[],
-            "state":[],
-            "city":[],
-            "topic":[],
+            "region":[],
+            "city":[]
         }
+
         try {
             for (let j=0; j < result.length; j++) {
                 let item = result[j];
                 // console.log(item);
                 // country
                 let i = -1;
-                if (summary.country.length == 0)   
+                if (summary.country.length == 0 && item['country'] != null)   
                     summary.country.push(
                             {
                                 "name":item['country'],
-                                "count": 1
+                                "count": 1,
+                                "datasetIndex": [j]
                             });
                 else { 
                     i = this.findIndex(summary.country,item['country']);
@@ -402,81 +403,107 @@ export class SchemaService {
                         summary.country.push(
                             {
                                 "name":item['country'],
-                                "count": 1
+                                "count": 1,
+                                "datasetIndex": [j]
                             });
-                    else 
+                    else {
                         summary.country[i]['count'] += 1;
+                        summary.country[i]['datasetIndex'].push(j);
+                    }
                 }
                 // state
-                if (summary.state.length == 0) 
-                    summary.state.push(
+                if (summary.region.length == 0 && item['state_province'] != null) 
+                    summary.region.push(
                         {
                             "name":item['state_province'],
-                            "count": 1
+                            "count": 1,
+                            "datasetIndex": [j]
                         });
                 else {
-                    i = this.findIndex(summary.state,item['state_province']);
+                    i = this.findIndex(summary.region,item['state_province']);
                     if (i < 0)
-                        summary.state.push(
+                        summary.region.push(
                             {
                                 "name":item['state_province'],
-                                "count": 1
+                                "count": 1,
+                                "datasetIndex": [j]
                             });
-                    else 
-                        summary.state[i]['count'] += 1;
+                    else {
+                        summary.region[i]['count'] += 1;
+                        summary.region[i]['datasetIndex'].push(j);
+                    }
                 }
                 
                 // city is an array in result 
                 for ( let k =0; k < item['city'].length; k++) {
                     let c = item['city'][k];
-                    if ( summary.city.length == 0)
+                    if ( summary.city.length == 0 && c != null && c != '')
                         summary.city.push(
                             {
                                 "name": c,
-                                "count": 1
-                                });
+                                "count": 1,
+                                "datasetIndex": [j]
+                            });
                     else {
                         i = this.findIndex(summary.city,c);
-                        if ( i  >= 0)
+                        if ( i  >= 0) {
                             summary.city[i]['count'] += 1;
+                            summary.city[i]['datasetIndex'].push(j)
+                        }
                         else 
                             summary.city.push(
                                     {
                                         "name": c,
-                                        "count": 1
+                                        "count": 1,
+                                        "datasetIndex": [j]
                                     });
                     }
                 } 
-                // topic is an array in result 
-                for ( let k=0; k < item['topic'].length; k++) {
-                    let t = item['topic'][k];
-                    if ( summary.topic.length == 0)
-                        summary.topic.push(
-                            {
-                                "name": t,
-                                "count": 1
-                                });
-                    else {
-                        i = this.findIndex(summary.topic,t);
-                        if ( i  >= 0)
-                            summary.topic[i]['count'] += 1;
-                        else 
-                            summary.topic.push(
-                                    {
-                                        "name": t,
-                                        "count": 1
-                                    });
-                        }
-                    }
             }
-        }catch (err) {
+        } catch (err) {
             console.log(err);
         }
-
-        console.log(summary);
+        console.log(JSON.stringify(summary));
         return summary;
     }
 
+    topicFactsets (result:any) {
+        let summary = {
+            topic:[]
+        }
+        for (let j=0; j < result.length; j++) {
+            let item = result[j];
+            let i = -1;
+        // topic is an array in result 
+            for ( let k=0; k < item['topic'].length; k++) {
+                let t = item['topic'][k];
+                if (summary.topic.length == 0 && t != null && t != '' )
+                    summary.topic.push(
+                        {
+                            "name": t,
+                            "count": 1,
+                            "datasetIndex": [j]
+                        });
+                else {
+                    i = this.findIndex(summary.topic,t);
+                    if ( i  >= 0) {
+                        summary.topic[i]['count'] += 1;
+                        summary.topic[i]['datasetIndex'].push(j);
+                    }
+                    else 
+                        summary.topic.push(
+                                {
+                                    "name": t,
+                                    "count": 1,
+                                    "datasetIndex": [j]
+                                });
+                    }
+                }
+            }
+        console.log(JSON.stringify(summary));
+        return summary;
+    }
+ 
     async searchDataset(fields:string,topics:string,cities:string,region:string,country:string,purchased_by:number,op:string) {
         fields = fields.replace(/,/g,'|');
         fields = fields.replace(/ /g,'|');
@@ -512,15 +539,15 @@ export class SchemaService {
         if ( data ['marketplace_search_dataset_schema'] !== undefined ) {
             let result = data['marketplace_search_dataset_schema'];
 
-            let factsets = null;
-            if (result.length > 0) {
-                 factsets = this.factsets(result);
-            }
-
             let response = {
-                "factsets": factsets,
+                "geoFactsets": null,
+                "topicFactsets":null,
                 "datasets": result
             };
+            if (result.length > 0) {
+                 response.geoFactsets = this.geoFactsets(result);
+                 response.topicFactsets = this.topicFactsets(result);
+            }
 
             return response;
         } else {
