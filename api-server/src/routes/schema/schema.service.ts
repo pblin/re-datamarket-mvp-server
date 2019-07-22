@@ -376,6 +376,21 @@ export class SchemaService {
             }
         return found;
     }
+    cityGrouping(cities:any,topics:any,ci:number) {
+        let city_array = [];
+        for ( let k =0; k < cities.length; k++) {
+            let topic_in_city = this.topicGrouping(topics, ci);
+            city_array.push(
+                { 
+                    "name":cities[k],
+                    "count": 1,
+                    "datasetIndex":[ci],
+                    "topic": topic_in_city
+                }
+            )
+        }
+        return city_array;
+    }
     topicGrouping(topics:any,ci:number) {
         let topic_array = [];
         for (let i=0; i < topics.length; i++) {
@@ -415,7 +430,7 @@ export class SchemaService {
                 let i = this.findIndex(summary.country,item['country']);
 
                 if (i  < 0) { // initial country entry
-                    let topic_in_city = this.topicGrouping(item['topic'],j);
+                    let cities = this.cityGrouping(item['city'], item['topic'], j);
                     summary.country.push(
                         {
                             "name":item['country'],
@@ -424,16 +439,11 @@ export class SchemaService {
                             "region": [{
                                         "name": item['state_province'],
                                         "count": 1,
-                                        "city": [{
-                                                "name":item['city'],
-                                                "count": 1,
-                                                "datasetIndex":[j],
-                                                "topic":topic_in_city
-                                            }],
+                                        "city": cities,
                                         "datasetIndex": [j]
                                     }]
                         });
-                    } 
+                } 
                 else { // tally country
                     summary.country[i].count += 1;
                     summary.country[i]['datasetIndex'].push(j);
@@ -441,17 +451,12 @@ export class SchemaService {
                     let ii  = this.findIndex(summary.country[i]['region'], item['state_province']);
 
                     if (ii < 0) { //initial state entry
-                        let topic_in_city = this.topicGrouping(item['topic'],j);
+                        let cities = this.cityGrouping(item['city'],item['topic'],j);
                         summary.country[i].region.push(
                                 {
                                     "name": item['state_province'],
                                     "count": 1,
-                                    "city": [{
-                                            "name":item['city'],
-                                            "count": 1,
-                                            "datasetIndex":[j],
-                                            "topic": topic_in_city
-                                        }],
+                                    "city": cities,
                                     "datasetIndex":[j]
                                 });
                     } else { // tally state
@@ -461,11 +466,11 @@ export class SchemaService {
                         for ( let k =0; k < item['city'].length; k++) {
                             let c = item['city'][k];
                             let iii = this.findIndex (summary.country[i].region[ii]['city'],c);
-                            if (iii < 0 && c != null && c != '')  { // inital city entry
+                            if (iii < 0 )  { // inital city entry
                                 let topic_in_city = this.topicGrouping(item['topic'],j);
                                 summary.country[i].region[ii].city.push (
                                     {
-                                        "name":item['city'],
+                                        "name":c,
                                         "count": 1,
                                         "datasetIndex":[j],
                                         "topic": topic_in_city
