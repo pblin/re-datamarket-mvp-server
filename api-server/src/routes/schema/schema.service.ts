@@ -29,7 +29,6 @@ sample_hash \
 data_hash \
 data_compression \
 json_schema \
-schema \
 date_created \
 date_modified \
 sample_access_url \
