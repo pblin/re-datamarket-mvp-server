@@ -167,6 +167,21 @@ export class MarketplaceService {
             }
         return found;
     }
+    cityGrouping(cities:any,topics:any,ci:number) {
+        let city_array = [];
+        for ( let k =0; k < cities.length; k++) {
+            let topic_in_city = this.topicGrouping(topics, ci);
+            city_array.push(
+                { 
+                    "name":cities[k],
+                    "count": 1,
+                    "datasetIndex":[ci],
+                    "topic": topic_in_city
+                }
+            )
+        }
+        return city_array;
+    }
     topicGrouping(topics:any,ci:number) {
         let topic_array = [];
         for (let i=0; i < topics.length; i++) {
@@ -206,7 +221,7 @@ export class MarketplaceService {
                 let i = this.findIndex(summary.country,item['country']);
 
                 if (i  < 0) { // initial country entry
-                    let topic_in_city = this.topicGrouping(item['topic'],j);
+                    let cities = this.cityGrouping(item['city'], item['topic'], j);
                     summary.country.push(
                         {
                             "name":item['country'],
@@ -215,16 +230,11 @@ export class MarketplaceService {
                             "region": [{
                                         "name": item['state_province'],
                                         "count": 1,
-                                        "city": [{
-                                                "name":item['city'],
-                                                "count": 1,
-                                                "datasetIndex":[j],
-                                                "topic":topic_in_city
-                                            }],
+                                        "city": cities,
                                         "datasetIndex": [j]
                                     }]
                         });
-                    } 
+                } 
                 else { // tally country
                     summary.country[i].count += 1;
                     summary.country[i]['datasetIndex'].push(j);
@@ -232,17 +242,12 @@ export class MarketplaceService {
                     let ii  = this.findIndex(summary.country[i]['region'], item['state_province']);
 
                     if (ii < 0) { //initial state entry
-                        let topic_in_city = this.topicGrouping(item['topic'],j);
+                        let cities = this.cityGrouping(item['city'],item['topic'],j);
                         summary.country[i].region.push(
                                 {
                                     "name": item['state_province'],
                                     "count": 1,
-                                    "city": [{
-                                            "name":item['city'],
-                                            "count": 1,
-                                            "datasetIndex":[j],
-                                            "topic": topic_in_city
-                                        }],
+                                    "city": cities,
                                     "datasetIndex":[j]
                                 });
                     } else { // tally state
@@ -252,11 +257,11 @@ export class MarketplaceService {
                         for ( let k =0; k < item['city'].length; k++) {
                             let c = item['city'][k];
                             let iii = this.findIndex (summary.country[i].region[ii]['city'],c);
-                            if (iii < 0 && c != null && c != '')  { // inital city entry
+                            if (iii < 0 )  { // inital city entry
                                 let topic_in_city = this.topicGrouping(item['topic'],j);
                                 summary.country[i].region[ii].city.push (
                                     {
-                                        "name":item['city'],
+                                        "name":c,
                                         "count": 1,
                                         "datasetIndex":[j],
                                         "topic": topic_in_city
@@ -290,6 +295,10 @@ export class MarketplaceService {
         } catch (err) {
             console.log(err);
         }
+
+        if (summary.country[0].count == 0) // delete default entry if the count is 0
+            delete summary.country[0];
+
         console.log(JSON.stringify(summary));
         return summary;
     }
@@ -369,6 +378,7 @@ export class MarketplaceService {
             logger.info("entities:" + token);
 
             let terms_for_key_phrases;
+
             for (let i=0; i<token.length; i++) {
                     let inject = token[i]['name'].replace(/ /g,'<1>');
                     logger.info("entities inject->"+inject);
@@ -378,7 +388,9 @@ export class MarketplaceService {
                     terms_for_key_phrases = new_terms.replace(re,''); // take out known entities
                     logger.info("to be check for key phrases:" + terms_for_key_phrases);
                 }
-            
+            if (token.length == 0)
+                terms_for_key_phrases = new_terms;
+
             logger.info(phrase_api_loc);
             payload.documents[0].text = terms_for_key_phrases;
             options.body = JSON.stringify(payload);
