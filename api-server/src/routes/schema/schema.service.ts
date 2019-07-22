@@ -508,6 +508,25 @@ export class SchemaService {
         return summary;
     }
 
+    removeDefaultGeoFactset(factsets:any)
+    {
+        console.log(factsets.country[0].count);
+        if (factsets.country[0].count == 0) 
+            factsets.country.shift()
+        else {
+            console.log(factsets.country[0].region[0].count);
+            if (factsets.country[0].region[0].count == 0) {
+                factsets.country[0].region.shift();
+                // console.log("region legth:" + factsets.country[0].region.length);
+            }
+            else {
+                console.log(factsets.country[0].region[0].city[0].count);
+                if (factsets.country[0].region[0].city[0].count == 0)
+                    factsets.country[0].region[0].city.shift()
+            }
+        }
+        return factsets;
+    }
     topicFactsets (result:any) {
         let summary = {
             topic:[]
@@ -586,7 +605,8 @@ export class SchemaService {
                 "datasets": result
             };
             if (result.length > 0) {
-                 response.geoFactsets = this.geoFactsets(result);
+                 let geoFactsets = this.geoFactsets(result);
+                 response.geoFactsets = this.removeDefaultGeoFactset(geoFactsets);
                  response.topicFactsets = this.topicFactsets(result);
             }
 
