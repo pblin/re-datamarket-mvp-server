@@ -193,6 +193,25 @@ export class MarketplaceService {
         }
         return topic_array;
     }
+    removeDefaultGeoFactset(factsets:any)
+    {
+        console.log(factsets.country[0].count);
+        if (factsets.country[0].count == 0) 
+            factsets.country.shift()
+        else {
+            console.log(factsets.country[0].region[0].count);
+            if (factsets.country[0].region[0].count == 0) {
+                factsets.country[0].region.shift();
+                // console.log("region legth:" + factsets.country[0].region.length);
+            }
+            else {
+                console.log(factsets.country[0].region[0].city[0].count);
+                if (factsets.country[0].region[0].city[0].count == 0)
+                    factsets.country[0].region[0].city.shift()
+            }
+        }
+        return factsets;
+    }
     geoFactsets (result:any) {
         let summary = {
                 "country":[{  
@@ -295,10 +314,6 @@ export class MarketplaceService {
         } catch (err) {
             console.log(err);
         }
-
-        if (summary.country[0].count == 0) // delete default entry if the count is 0
-            delete summary.country[0];
-
         console.log(JSON.stringify(summary));
         return summary;
     }
@@ -456,7 +471,9 @@ export class MarketplaceService {
                 "datasets": result
             };
             if (result.length > 0) {
-                 response.geoFactsets = this.geoFactsets(result);
+                 let geoFactsets = this.geoFactsets(result);
+                 response.geoFactsets = this.removeDefaultGeoFactset(geoFactsets);
+                 logger.info("geo factsets:" + JSON.stringify(response.geoFactsets));
                  response.topicFactsets = this.topicFactsets(result);
             }
             return response; 
