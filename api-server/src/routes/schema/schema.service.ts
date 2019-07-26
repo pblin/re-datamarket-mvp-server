@@ -564,7 +564,15 @@ export class SchemaService {
         return summary;
     }
  
-    async searchDataset(fields:string,topics:string,cities:string,region:string,country:string,purchased_by:number,op:string) {
+    async searchDataset(fields:string,
+                        topics:string,
+                        cities:string,
+                        region:string,
+                        country:string,
+                        user_id:number,
+                        purchased_by:number,
+                        op:string) 
+    {
         fields = fields.replace(/,/g,'|');
         fields = fields.replace(/ /g,'|');
         console.log ("fields="+fields);
@@ -577,6 +585,7 @@ export class SchemaService {
                             cities: "${cities}", 
                             region:  "${region}",
                             ctn: "${country}",
+                            user_id: ${user_id},
                             purchased_by: ${purchased_by}
                         }
                     ) {

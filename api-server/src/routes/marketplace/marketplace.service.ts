@@ -440,6 +440,7 @@ export class MarketplaceService {
                          state:string,
                          country:string,
                          purchased_by:number,
+                         user_id:number,
                          op:string) {
         
                             
@@ -448,12 +449,13 @@ export class MarketplaceService {
             `query {
                         marketplace_search_dataset ( 
                             args: { 
+                                user_id: ${user_id},
+                                purchased_by: ${purchased_by},
                                 topics: "${topics}", 
                                 terms: "${tokenized_terms}", 
                                 cities: "${cities}", 
                                 region: "${state}",
-                                cn: "${country}",
-                                purchased_by: ${purchased_by}
+                                cn: "${country}"
                             }
                         )
                     {
