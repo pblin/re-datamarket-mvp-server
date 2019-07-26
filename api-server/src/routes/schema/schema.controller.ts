@@ -157,8 +157,10 @@ router.get('/search', (req, res) => {
     if (req.query.purchased_by != undefined) 
         purchased_by = req.query.purchased_by;
     
-    if (req.query.user_id != undefined) 
+    if (req.query.user_id != undefined) {
         user_id = req.query.user_id;
+        purchased_by = user_id; // user can not query what others buy
+    }
 
     if (req.query.op != undefined) {
         if (req.query.op.toLowerCase() != 'and')
@@ -168,7 +170,7 @@ router.get('/search', (req, res) => {
     if (fields == '' && cities == '' && topics == '' && region == '' && country == '' && purchased_by==0)
         return res.status(404).send("no search criteria")
 
-    return schemaService.searchDataset(fields,topics,cities,region,country,purchased_by,user_id,op).then(datasets => {
+    return schemaService.searchDataset(purchased_by,user_id,fields,topics,cities,region,country,op).then(datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");
             } else {

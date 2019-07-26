@@ -564,13 +564,14 @@ export class SchemaService {
         return summary;
     }
  
-    async searchDataset(fields:string,
+    async searchDataset(
+                        purchased_by:number,
+                        user_id:number,
+                        fields:string,
                         topics:string,
                         cities:string,
                         region:string,
                         country:string,
-                        user_id:number,
-                        purchased_by:number,
                         op:string) 
     {
         fields = fields.replace(/,/g,'|');
@@ -580,13 +581,13 @@ export class SchemaService {
                 query {
                     marketplace_search_dataset_schema ( 
                         args: { 
+                            purchased_by: ${purchased_by},
+                            user_id: ${user_id},
                             fields: "${fields}", 
                             topics: "${topics}", 
                             cities: "${cities}", 
                             region:  "${region}",
-                            ctn: "${country}",
-                            user_id: ${user_id},
-                            purchased_by: ${purchased_by}
+                            ctn: "${country}"
                         }
                     ) {
                         dataset_id,
