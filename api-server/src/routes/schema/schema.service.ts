@@ -402,6 +402,7 @@ export class SchemaService {
         }
         return topic_array;
     }
+
     geoFactsets (result:any) {
         let summary = {
                 "country":[{  
@@ -534,7 +535,8 @@ export class SchemaService {
         for (let j=0; j < result.length; j++) {
             let item = result[j];
             let i = -1;
-        // topic is an array in result 
+
+            // topic is an array in result 
             for ( let k=0; k < item['topic'].length; k++) {
                 let t = item['topic'][k];
                 if (summary.topic.length == 0 && t != null && t != '' )
@@ -626,87 +628,60 @@ export class SchemaService {
         }
     }
 
-    // async getDataFields(country:string, region:string, terms:string) {
-    //     let query =  `query data_fields ($country:String, $region: String) {
-    //         marketplace_source_of_field (
-    //           where: { _and:[ 
-    //             				 {country: { _eq: $country}},
-    //           					 {region: { _eq: $region}}
-    //         				]
-    //         		}
-    //         	) 
-    //         {
-    //           source_id
-    //           field_label
-    //           search_terms
-    //         }
-    //       }`
+    async searchDatasetObject(
+                                purchased_by:number,
+                                user_id:number,
+                                fields:string,
+                                city_county:string,
+                                region:string,
+                                country:string) 
+            {
+                fields = fields.replace(/,/g,'|');
+                fields = fields.replace(/ /g,'|');
+                console.log ("fields="+fields);
+                let query = `query {
+                                    marketplace_search_dataset_object ( 
+                                        args: { 
+                                            purchased_by: ${purchased_by},
+                                            user_id: ${user_id},
+                                            fields: "${fields}", 
+                                            in_city_county: "${city_county}", 
+                                            in_region:  "${region}",
+                                            ctn: "${country}"
+                                        }
+                                    ) {
+                                        object_name 
+                                        field_name
+                                        field_description
+                                        field_category
+                                        country
+                                        state_province
+                                        city
+                                        dataset_name
+                                        topic
+                                        dataset_id
+                                    }
+                                }`;
 
-    //     let variables = {};
-    //     if ( country != '' && region != '') {
-    //         variables = {
-    //             country,
-    //             region
-    //         }
-    //     } else {
-    //         if (country != '') {
-    //             variables = {
-    //                 country
-    //             }
-    //         } else {
-    //             if (region != '') {
-    //                 variables = {
-    //                     region
-    //                  }
-    //             }
-    //         }
-    //     }
-    //     // console.log(variables);
-    //     let data = await this.client.request(query,variables);
-        
-    //     let x = 0;
-    //     let hitList = [];
-    //     if ( data ['marketplace_source_of_field'] !== undefined ) {
-    //         let objList = data ['marketplace_source_of_field'];
-    //         // console.log(objList.length);
-    //         for (var i = 0; i <  objList.length; i++ ) {
-    //             let isTermClose = 0;
-    //             let searchTermList = objList[i]['search_terms'];
-    //             if (searchTermList != null) {
-    //                 for (let j in searchTermList ) {
-    //                     // console.log (searchTermList[j]);
-    //                     if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
-    //                             isTermClose = 1; //found a match
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-    //             if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
-    //                     if ( hitList.indexOf(objList[i]['source_id']) == -1) {
-    //                         hitList.push(objList[i]['source_id']);
-    //                     }
-    //                 }
-    //             }
-    //         }
-                
-    //         query = `query get_source_details ($objects:[String]) {
-    //             marketplace_data_source_detail (
-    //             where: { id: {_in: $objects} }
-    //             ){
-    //             ${dsCols}
-    //             }
-    //         }`
-    //         variables = {
-    //             objects: hitList
-    //             }
-    //         logger.info(`hist list = ( ${hitList} )`);
-    //         data = await this.client.request(query,variables);
-            
-    //         if (data['marketplace_data_source_detail'] !== undefined ) {
-    //             return data['marketplace_data_source_detail'];
-    //         } else {
-    //             return null;
-    //         }
-    // }
+                logger.info (query);
+                let data = await this.client.request(query);
 
+                if ( data ['marketplace_search_dataset_object'] !== undefined ) {
+                    let result = data['marketplace_search_dataset_object'];
+
+                    let response = {
+                            "geoFactsets": null,
+                            "objects": result
+                        }
+
+                    if (result.length > 0) {
+                        let geoFactsets = this.geoFactsets(result);
+                        response.geoFactsets = this.removeDefaultGeoFactset(geoFactsets);
+                    }
+                    return response;
+
+                } else {
+                    return null; 
+                }
+        }
 }

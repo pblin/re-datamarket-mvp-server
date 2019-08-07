@@ -182,6 +182,54 @@ router.get('/search', (req, res) => {
         });
   });
 
+  router.get('/object/search', (req, res) => {
+    let fields = '';
+    let city_county = '';
+    let region = '';
+    let country = '';
+    let county = '';
+    let purchased_by = 0;
+    let user_id = 0;
+
+    if (req.query.fields!= undefined) 
+        fields = req.query.fields;
+
+    if (req.query.city != undefined)
+        city_county = req.query.city;
+    
+    if (req.query.region != undefined) 
+        region = req.query.region;
+    
+    if (req.query.country != undefined) 
+        country = req.query.country;
+    
+    if (req.query.county != undefined) 
+        county = req.query.county;
+
+    if (req.query.purchased_by != undefined) 
+        purchased_by = req.query.purchased_by;
+    
+    if (req.query.user_id != undefined) {
+        user_id = req.query.user_id;
+        purchased_by = user_id; // user can not query what others buy
+    }
+
+
+    if (fields == '' && city_county == '' && region == '' && country == '' && purchased_by==0)
+        return res.status(404).send("no search criteria")
+
+    return schemaService.searchDatasetObject(purchased_by,user_id,fields,city_county,region,country).then(datasets => {
+        if (datasets == null ) {
+            return res.status(404).send("resource not found");
+            } else {
+                return res.status(200).send(datasets);
+            }
+        }).catch((err) => {
+            logger.error(`search field error: ${err}`);
+            return res.status(500).send("unknown server error"); 
+        });
+  });
+
 router.delete('/dataset/:assetid', (req, res, netxt) => {
     // console.log (req.params.assetid);
     if (req.params.assetid === undefined) {
