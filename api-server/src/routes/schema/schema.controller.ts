@@ -214,10 +214,6 @@ router.get('/search', (req, res) => {
         purchased_by = user_id; // user can not query what others buy
     }
 
-
-    if (fields == '' && city_county == '' && region == '' && country == '' && purchased_by==0)
-        return res.status(404).send("no search criteria")
-
     return schemaService.searchDatasetObject(purchased_by,user_id,fields,city_county,region,country).then(datasets => {
         if (datasets == null ) {
             return res.status(404).send("resource not found");

@@ -76,84 +76,6 @@ export class SchemaService {
         } else
             return  -1; 
     }
-    async extractAndSaveDataFields (schema:any, ds_id:string, search_terms:string, region:string, country:string) {
-        const mut = `
-            mutation insert_marketplace_source_of_field($objects:[marketplace_source_of_field_insert_input!]!)
-            {
-            insert_marketplace_source_of_field ( 
-                objects:$objects,
-                on_conflict: { 
-                    constraint: source_of_field_pkey
-                    update_columns: [ 
-                        field_name
-                        field_label
-                        description
-                        field_type
-                        region
-                        country
-                        search_terms
-                        source_id
-                    ] 
-            } ) {
-                    affected_rows
-                }
-            }`;
-        // console.log(mut);
-
-        let variables = {
-            objects: []
-        };
-
-        // console.log(schema.length);
-        for (var i = 0; i < schema.length; i++) {
-            if (schema[i].label === undefined) {
-                schema[i].label = schema[i].name.replace(/_/g, " ").toLowerCase();
-            }
-            const item = {
-                    field_name:schema[i].name,
-                    description:schema[i].description.toLowerCase(),
-                    field_label:schema[i].label,
-                    field_type:schema[i].type,
-                    region: region,
-                    country: country,
-                    search_terms:search_terms,
-                    source_id:ds_id,
-                };
-
-            variables.objects.push(item);
-        }
-       // console.log(variables);
-
-        let data = await this.client.request(mut, variables);
-        logger.info(data);
-
-        if (data !== undefined ) {
-            return data['insert_marketplace_source_of_field'].affected_rows;
-        } else {
-            return -1; 
-        }
-    }
-    async deletePriorSavedFields (dataset_id: string) {
-        const mut = `mutation delete_data_fields ($dataset_id: String ) {
-            delete_marketplace_source_of_field (
-            where: {source_id: { _eq: $dataset_id} }
-            ) {
-                affected_rows
-            }
-        }`;
-
-        let variables = {
-            dataset_id
-        };
-
-        let data = await this.client.request(mut, variables);
-        logger.info(data);
-        if (data !== undefined ) {
-            return data['delete_marketplace_source_of_field'].affected_rows;
-        } else {
-            return -1; 
-        }
-    }
 
     async deleteSchema (id: string) {
         const mu = `mutation delete_schema ($id: String ) {
@@ -453,6 +375,7 @@ export class SchemaService {
 
                     if (ii < 0) { //initial state entry
                         let cities = this.cityGrouping(item['city'],item['topic'],j);
+                        summary.country[i].region[ii].count = 1;
                         summary.country[i].region.push(
                                 {
                                     "name": item['state_province'],
