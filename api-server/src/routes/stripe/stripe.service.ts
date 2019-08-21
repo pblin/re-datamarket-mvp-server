@@ -6,6 +6,7 @@ import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
 import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
 const router = express.Router();
+const asyncRouter = require('route-async')
 const upload = multer();
 
 const options = {
@@ -41,90 +42,64 @@ async function processStripeCharge(userid:string, payload:any)
     stripeToken,
     stripeTokenType,
   } = payload;
-  let stripe; 
-  let result;
-  try { 
-    result = await vault.read('secret/stripe');
-  } 
-  catch (err) {
-    logger.error(err);
-  }
 
-  let status;
+  let stripe; 
+  let result; 
+  let status = { ref: "failed" };
   let charge;
-  // console.log(result.data);
-  if (result == null || result['data'] == null || result['data'] === undefined) {
-      status ={ ref: "Payment credential error"} ;
-  }
+  let id = 'na';
+  let created = 0;
+
+  result = await vault.read('secret/stripe');
 
   stripe = new Stripe(result.data['skey']);
 
-  let id = -1;
-  let created = 0;
-
-  try {
-    let charge;
-
-    if (stripeTokenType === 'card') {
-      const idempotency_key = uuidv4();
-      charge = await stripe.charges.create(
-        {
-          amount: amount,
-          currency: currency,
-          description: description,
-          receipt_email: stripeEmail,
-          source: stripeToken,
-          statement_descriptor: 'Rebloc marketplace',
-          metadata: {
-            customerId: userid,
-            productId: product
-          }
-        },
-        {
-          idempotency_key,
-        }
-      );
-      logger.info("Charge ->" + JSON.stringify(charge));
-    } else {
-        status = { ref: `Unrecognized Stripe token type: "${stripeTokenType}"`};
-    }
-    
-    status = 
+  if (stripeTokenType === 'card') {
+    const idempotency_key = uuidv4();
+    charge = await stripe.charges.create(
       {
-        ref:"success",
-        timestamp:charge.created
-      };
-      id = charge.id;
-      created = charge.created;
-
-  } catch (err) {
-      status = {
-        ref:"failed",
-        timestamp: 0
-      };
-      logger.error(err);
+        amount: amount,
+        currency: currency,
+        description: description,
+        receipt_email: stripeEmail,
+        source: stripeToken,
+        statement_descriptor: 'Rebloc marketplace',
+        metadata: {
+          customerId: userid,
+          productId: product
+        }
+      },
+      {
+        idempotency_key,
+      }
+    );
+  } else {
+      status.ref = `Unrecognized Stripe token type: "${stripeTokenType}"`;
   }
   
+  status.ref = "ok",
+
+  id = charge.id;
+  created = charge.created;
+
   return {status, ref: id, timestamp: created }
 }
 
-router.post('/charge/:userid', upload.none(), (req, res) => {
+router.post('/charge/:userid', upload.none(), async (req, res) => {
   logger.info(JSON.stringify(req.body));
-
   if (req.params.userid === undefined) 
     res.sendStatus(404).send("user id needed");
-
-  return processStripeCharge(req.params.userid, req.body).then(result => {
-      if (result['id'] < 0) 
-        res.status(400).send(result['status']);
-      else 
-        res.status(200).send(result);
-
-  }).catch((err) => {
-    logger.error(`stripe charge: ${err}`);
-    return res.status(500).send("unknown stripe error"); 
-  });
-
+  let result;
+  try {
+    result = await processStripeCharge(req.params.userid, req.body); 
+    logger.info(result);
+    if (result['status']['ref'] != "ok")
+          res.status(500).send(result);
+        else 
+          res.status(200).send(result);
+  } catch (err){
+    res.status(400).json({status:{ref:"failed", error:err}});
+  }
 });
 
-export default router;
+export default asyncRouter(router);
