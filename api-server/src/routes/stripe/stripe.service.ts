@@ -59,8 +59,12 @@ async function processStripeCharge(userid:string, payload:any)
 
   stripe = new Stripe(result.data['skey']);
 
+  let id = -1;
+  let created = 0;
+
   try {
     let charge;
+
     if (stripeTokenType === 'card') {
       const idempotency_key = uuidv4();
       charge = await stripe.charges.create(
@@ -90,6 +94,8 @@ async function processStripeCharge(userid:string, payload:any)
         ref:"success",
         timestamp:charge.created
       };
+      id = charge.id;
+      created = charge.created;
 
   } catch (err) {
       status = {
@@ -98,15 +104,8 @@ async function processStripeCharge(userid:string, payload:any)
       };
       logger.error(err);
   }
-  let id = '-1';
-  let created = 0;
-
-  if (charge != null) {
-      created = charge.created;
-      id = charge.id;
-  }
-  return {status, ref:id, timestamp:created};
-
+  
+  return {status, ref: id, timestamp: created }
 }
 
 router.post('/charge/:userid', upload.none(), (req, res) => {
