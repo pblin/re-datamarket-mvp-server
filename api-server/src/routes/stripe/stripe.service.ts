@@ -17,6 +17,7 @@ const options = {
 const vault = require("node-vault")(options);
 router.post('/charge/:userid', upload.none(), async (req, res) => {
   logger.info(JSON.stringify(req.body));
+
   if (req.params.userid === undefined) 
     res.sendStatus(404).send("user id needed");
 
@@ -84,7 +85,7 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
           idempotency_key,
         }
       );
-      logger.info(JSON.stringify(charge));
+      logger.info("Charge ->" + JSON.stringify(charge));
     } else {
         throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
     }
@@ -106,10 +107,11 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       error = err;
       code = 500;
       logger.error(err);
+      return res.json({status, error: err });
   }
 
   const {created, id} = charge;
-  res.json({ error, status, ref: id, timestamp: created });
+  return res.json({status, ref: id, timestamp: created });
 });
 
 export default router;
