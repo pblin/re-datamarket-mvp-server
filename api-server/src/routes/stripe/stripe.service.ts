@@ -15,12 +15,32 @@ const options = {
 };
 
 const vault = require("node-vault")(options);
-router.post('/charge/:userid', upload.none(), async (req, res) => {
-  logger.info(JSON.stringify(req.body));
 
-  if (req.params.userid === undefined) 
-    res.sendStatus(404).send("user id needed");
 
+async function processStripeCharge(userid:string, payload:any) 
+{
+  const {
+    product,
+    amount,
+    csrfToken,
+    currency = 'usd',
+    description,
+    stripeBillingAddressCity,
+    stripeBillingAddressCountry,
+    stripeBillingAddressLine1,
+    stripeBillingAddressState,
+    stripeBillingAddressZip,
+    stripeBillingName,
+    stripeEmail,
+    stripeShippingAddressCity,
+    stripeShippingAddressCountry,
+    stripeShippingAddressLine1,
+    stripeShippingAddressState,
+    stripeShippingAddressZip,
+    stripeShippingName,
+    stripeToken,
+    stripeTokenType,
+  } = payload;
   let stripe; 
   let result;
   try { 
@@ -28,43 +48,18 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
   } 
   catch (err) {
     logger.error(err);
-    res.status(500).send("secret vault connection problem");
   }
+
+  let status;
+  let charge;
   // console.log(result.data);
   if (result == null || result['data'] == null || result['data'] === undefined) {
-      res.status(500).json({ result, "message":"Payment credential error"});
+      status ={ ref: "Payment credential error"} ;
   }
 
   stripe = new Stripe(result.data['skey']);
-  let error;
-  let status;
-  let code = 200;
-  let charge;
 
   try {
-    const {
-      product,
-      amount,
-      csrfToken,
-      currency = 'usd',
-      description,
-      stripeBillingAddressCity,
-      stripeBillingAddressCountry,
-      stripeBillingAddressLine1,
-      stripeBillingAddressState,
-      stripeBillingAddressZip,
-      stripeBillingName,
-      stripeEmail,
-      stripeShippingAddressCity,
-      stripeShippingAddressCountry,
-      stripeShippingAddressLine1,
-      stripeShippingAddressState,
-      stripeShippingAddressZip,
-      stripeShippingName,
-      stripeToken,
-      stripeTokenType,
-    } = req.body;
-
     let charge;
     if (stripeTokenType === 'card') {
       const idempotency_key = uuidv4();
@@ -77,7 +72,7 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
           source: stripeToken,
           statement_descriptor: 'Rebloc marketplace',
           metadata: {
-            customerId: req.params.userid,
+            customerId: userid,
             productId: product
           }
         },
@@ -87,31 +82,50 @@ router.post('/charge/:userid', upload.none(), async (req, res) => {
       );
       logger.info("Charge ->" + JSON.stringify(charge));
     } else {
-        throw Error(`Unrecognized Stripe token type: "${stripeTokenType}"`);
+        status = { ref: `Unrecognized Stripe token type: "${stripeTokenType}"`};
     }
     
     status = 
       {
-        ref:charge.id,
+        ref:"success",
         timestamp:charge.created
       };
-
-    code = 200;
-    // console.log(status);
 
   } catch (err) {
       status = {
         ref:"failed",
         timestamp: 0
       };
-      error = err;
-      code = 500;
       logger.error(err);
-      return res.json({status, error: err });
   }
+  let id = '-1';
+  let created = 0;
 
-  const {created, id} = charge;
-  return res.json({status, ref: id, timestamp: created });
+  if (charge != null) {
+      created = charge.created;
+      id = charge.id;
+  }
+  return {status, ref:id, timestamp:created};
+
+}
+
+router.post('/charge/:userid', upload.none(), (req, res) => {
+  logger.info(JSON.stringify(req.body));
+
+  if (req.params.userid === undefined) 
+    res.sendStatus(404).send("user id needed");
+
+  return processStripeCharge(req.params.userid, req.body).then(result => {
+      if (result['id'] < 0) 
+        res.status(400).send(result['status']);
+      else 
+        res.status(200).send(result);
+
+  }).catch((err) => {
+    logger.error(`stripe charge: ${err}`);
+    return res.status(500).send("unknown stripe error"); 
+  });
+
 });
 
 export default router;
