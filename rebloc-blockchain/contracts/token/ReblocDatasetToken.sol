@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.3;
 pragma experimental ABIEncoderV2;
 
 import "../../node_modules/openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
@@ -45,30 +45,31 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
         string fileHash;
         string ipfsHash;
         string compression;
-        uint256 price;
+        uint32 price;
         string pricingUnit;
-        uint256 commission;
-        address curator;
+        uint32 commission;
     }
 
     struct Validator {
         address validatorAddress;
-        uint256 commission; 
+        uint32 commission; 
     }
     
     // A pointer to the next token to be minted, zero indexed
     uint256 public tokenIdPointer = 0;
 
     enum PurchaseState {Unsold, EtherPurchase, FiatPurchase}
-    mapping(uint256 => PurchaseState) internal tokenIdToPurchased;
+    mapping(uint256 => PurchaseState) internal tokenIdToSell;
     mapping(uint256 => uint32) internal tokenIdToPurchaseFromTime;
     mapping(uint256 => Dataset) internal datasetInfo;
     mapping(uint256 => Validator[]) internal validator;
 
-    event PurchasedWithEther(uint256 indexed _tokenId, address indexed _buyer);
-    event PurchasedWithFiat(uint256 indexed _tokenId);
-    event PurchasedWithFiatReversed(uint256 indexed _tokenId);
+    event SoldWithEther( uint256 indexed _tokenId, address indexed _buyer);
+    event SoldWithFiat(uint256 indexed _tokenId, address indexed _buyer);
+    event SoldWithFiatReversed(uint256 indexed _tokenId, address indexed _buyer);
     event Approval (address indexed _address, uint256 indexed _tokenId);
+    event MintToken (bytes _assetId, string _tokenURI, string  _ipfsHash, 
+                     uint32 _price, uint32 _size, uint256 indexed _tokenId, address indexed to);
 
     modifier onlyOwnedToken(uint256 _tokenId) {
         require(super.ownerOf(_tokenId) == msg.sender);
@@ -76,7 +77,7 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     }
 
     modifier onlyUnsold(uint256 _tokenId) {
-        require(tokenIdToPurchased[_tokenId] == PurchaseState.Unsold);
+        require(tokenIdToSell[_tokenId] == PurchaseState.Unsold);
         _;
     }
 
@@ -85,8 +86,8 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
         _;
     }
 
-    modifier onlyFiatPurchased(uint256 _tokenId) {
-        require(tokenIdToPurchased[_tokenId] == PurchaseState.FiatPurchase);
+    modifier onlyFiatSold(uint256 _tokenId) {
+        require(tokenIdToSell[_tokenId] == PurchaseState.FiatPurchase);
         _;
     }
 
@@ -105,7 +106,7 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @dev Reverts if token is not unsold or not called by management
     * @param _tokenId the RDT token ID
     */
-    function setPrice(uint _tokenId, uint256 _price, string memory _pricingUnit) public
+    function setPrice(uint _tokenId, uint32 _price, string memory _pricingUnit) public
                             onlyUnsold(_tokenId) 
                             onlyOwnedToken (_tokenId) 
         {
@@ -147,15 +148,16 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     constructor (address _operatorAccount) public {
         if (_operatorAccount != address(0)) {
             operatorAccount = _operatorAccount;
-        } else {
+        } else 
             operatorAccount = msg.sender;
-        }
+    
         _registerInterface(INTERFACE_ID_ERC721_ENUMERABLE);
     }
 
-    function getOperatorAccount() public view returns (address _operatorAccount) {
+    function getOperatorAccount() public view returns (address) {
         return (operatorAccount);
     }
+
     /**
     * @dev Mint a new RDT token
     * @dev Reverts if not called by management
@@ -167,20 +169,35 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @param _pricingUnit usd, wei, eth, ...
     * @param _size file size 
     */
-    function mint(bytes memory _id, string memory _fileHash, string memory _compression, uint32 _size, string memory _ipfsHash, 
-                    uint256 _price, string memory _pricingUnit, string memory _tokenURI) public
+
+    function mint(bytes memory _id, 
+                  string memory _fileHash, 
+                  string memory _compression, 
+                  string memory _ipfsHash, 
+                  uint32 _size, 
+                  uint32 _price, 
+                  string memory _pricingUnit, 
+                  string memory _tokenURI,
+                  address _toAddress) public onlyOperator() 
         {
             uint256 _tokenId = tokenIdPointer;
-            uint256 _initialCommission = 0;
-            Dataset memory newDataset = Dataset({id: _id, fileHash: _fileHash, compression: _compression, ipfsHash: _ipfsHash, size: _size,
-                                                price: _price, pricingUnit: _pricingUnit, commission: _initialCommission, curator: msg.sender});
+            uint32 _initialCommission = 0;
+            Dataset memory newDataset = Dataset({id: _id, 
+                                                fileHash: _fileHash, 
+                                                compression: _compression, 
+                                                ipfsHash: _ipfsHash, 
+                                                size: _size,
+                                                price: _price, 
+                                                pricingUnit: _pricingUnit, 
+                                                commission: _initialCommission});
 
-            _mint(msg.sender, _tokenId);
-            _ownedTokens[msg.sender].push(_tokenId);
+            _mint(_toAddress, _tokenId);
+            _ownedTokens[_toAddress].push(_tokenId);
             _populateTokenData(_tokenId, newDataset);
 
             super._setTokenURI(_tokenId, _tokenURI);
             tokenIdPointer = tokenIdPointer.add(1);
+            emit MintToken (_id, _tokenURI, _ipfsHash, _price, _size, _tokenId, _toAddress);
         }
 
     /**
@@ -201,22 +218,15 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @param _tokenId the RDT token ID
     * @return tokenId, owner, purchaseState, purchaseFromDateTime, pricingUnit
     */
-    function getDatasetInfo(uint256 _tokenId) public view returns (
-                    Dataset memory _dataset,
-                    address _owner,
-                    PurchaseState _purchaseState,
-                    uint32 _purchaseFromTime)         
+    function getDatasetInfo(uint256 _tokenId) public view returns (Dataset memory)         
         {
             return 
                 (
-                    datasetInfo[_tokenId],
-                    super.ownerOf(_tokenId),
-                    tokenIdToPurchased[_tokenId],
-                    tokenIdToPurchaseFromTime[_tokenId]
+                    datasetInfo[_tokenId]
                 );
         }
 
-    function tokensOf(address _owner) public view returns (uint256[] memory _tokenIds) {
+    function tokensOf(address _owner) public view returns (uint256[] memory) {
         return _ownedTokens[_owner];
     }
 
@@ -225,9 +235,9 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @param _tokenId the RDT token ID
     * @return the purchase sate, either 0, 1, 2, reverts if token not found
     */
-    function isPurchased(uint256 _tokenId) public view returns (PurchaseState _purchased) {
+    function isPurchased(uint256 _tokenId) public view returns (PurchaseState) {
         require(_exists(_tokenId));
-        return tokenIdToPurchased[_tokenId];
+        return tokenIdToSell[_tokenId];
     }
 
     /**
@@ -235,7 +245,7 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @param _tokenId the RDT token ID
     * @return the purchased from time, reverts if token not found
     */
-    function purchaseFromTime(uint256 _tokenId) public view returns (uint32 _purchaseFromTime) {
+    function purchaseFromTime(uint256 _tokenId) public view returns (uint32) {
         require(_exists(_tokenId));
         return tokenIdToPurchaseFromTime[_tokenId];
     }
@@ -248,25 +258,26 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @param _tokenId the RDt token ID
     * @return true/false depending on success
     */
-    function purchaseWithEther(uint256 _tokenId, uint256 _commission) public payable onlyUnsold(_tokenId) {
-        require(_exists(_tokenId));
-        require(stringsEqual(datasetInfo[_tokenId].pricingUnit, "wei"));
-        require(msg.value >= datasetInfo[_tokenId].price);
+    function purchaseWithEther(uint256 _tokenId, uint32 _commission, address _buyer) 
+       public payable onlyUnsold(_tokenId) {
+            require(_exists(_tokenId));
+            require(stringsEqual(datasetInfo[_tokenId].pricingUnit, "wei"));
+            require(msg.value >= datasetInfo[_tokenId].price);
 
-        // approve sender as they have paid the required amount
-        _approvePurchaser(msg.sender, _tokenId);
+            // approve sender as they have paid the required amount
+            _approvePurchaser(_buyer, _tokenId);
 
-        // transfer assets from contract creator (curator) to new owner
-        safeTransferFrom(ownerOf(_tokenId), msg.sender, _tokenId);
+            // transfer assets from contract creator (curator) to new owner
+            safeTransferFrom(ownerOf(_tokenId), _buyer, _tokenId);
 
-        // now purchased - don't allow re-purchase!
-        tokenIdToPurchased[_tokenId] = PurchaseState.EtherPurchase;
+            // now purchased - don't allow re-purchase!
+            tokenIdToSell[_tokenId] = PurchaseState.EtherPurchase;
 
-        if (datasetInfo[_tokenId].price > 0) {
-            _applyCommission(_tokenId, _commission);
-        }
+            if (datasetInfo[_tokenId].price > 0) {
+                _applyCommission(_tokenId, _commission);
+            }
 
-        emit PurchasedWithEther (_tokenId, msg.sender);
+            emit SoldWithEther (_tokenId, _buyer);
     }
 
     /**
@@ -276,21 +287,21 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
     * @dev Reverts if token not unsold and not available to be purchased and not called by management
     * @param _tokenId the RDT token ID
     */
-    function purchaseWithFiat(uint256 _tokenId, uint256 _commission) public onlyUnsold(_tokenId) {
+    function purchaseWithFiat(uint256 _tokenId, uint32 _commission, address _buyer) public onlyUnsold(_tokenId) {
         require(_exists(_tokenId));
-        _approvePurchaser(msg.sender, _tokenId);
+        _approvePurchaser(_buyer, _tokenId);
 
         // transfer assets from contract creator (curator) to new owner
-        safeTransferFrom(ownerOf(_tokenId), msg.sender, _tokenId);
+        safeTransferFrom(ownerOf(_tokenId), _buyer, _tokenId);
 
         // now purchased - don't allow re-purchase!
-        tokenIdToPurchased[_tokenId] = PurchaseState.FiatPurchase;
+        tokenIdToSell[_tokenId] = PurchaseState.FiatPurchase;
 
         if (datasetInfo[_tokenId].price > 0) {
             _applyCommission(_tokenId, _commission);
         }
         // now purchased - don't allow re-purchase!
-        emit PurchasedWithFiat(_tokenId);
+        emit PurchasedWithFiat(_tokenId, _buyer);
     }
 
 
@@ -362,14 +373,14 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
      * @param owner address owning the tokens
      * @return uint256[] List of token IDs owned by the requested address
      */
-    function _tokensOfOwner(address owner) internal view returns (uint256[] storage) {
+    function _tokensOfOwner(address owner) internal view returns (uint256[] memory) {
         return _ownedTokens[owner];
     }
 
     /**
     * @dev Internal function for apply commission on purchase
     */
-    function _applyCommission(uint256 _tokenId, uint256 _commission) internal {
+    function _applyCommission(uint256 _tokenId, uint32 _commission) internal {
 
         // pirce in cents for fiat in wei for crypto
         datasetInfo[_tokenId].commission = _commission;
