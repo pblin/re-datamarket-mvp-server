@@ -1,6 +1,6 @@
 import * as Queue from 'bee-queue';
 import {VAULT_SERVER,VAULT_CLIENT_TOKEN,REDIS_HOST,REDIS_PORT,
-        CHAIN_IP,CONTRACT_ADDR,OPERATOR_ADDR,OPERATOR_PK} from './config/Env';
+        CHAIN_IP,CONTRACT_ADDR,OPERATOR_ADDR} from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
 import * as Web3 from 'web3';
 import * as loadJsonFile from 'load-json-file';
@@ -40,16 +40,7 @@ const w3 = new Web3( new Web3.providers.HttpProvider(CHAIN_IP));
 export class OrderProcessor {
     queue: Queue;
     async connectToJobQueue() {
-        let result;
-        try { 
-            result = await vault.read('secret/azureredis')
-
-        } 
-        catch (err) {
-            logger.error ("redis error " + err);
-            return (0);
-        }
-
+        let result = await vault.read('secret/azureredis');
         this.queue = new Queue('orders', {
             prefix: 'bq',
             stallInterval: 5000,
@@ -76,49 +67,50 @@ export class OrderProcessor {
         return (1);
     }
     async process() {
+
         let contractJson  = await loadJsonFile('./src/abi/ReblocDatasetToken.json')
         let tokenContract = new w3.eth.Contract(contractJson['abi'], CONTRACT_ADDR);
+        let pk;
+        try {
+            if (this.queue == null )  {
+                let status = await this.connectToJobQueue();
+                if (status == 0)
+                    logger.error('redis error');
+            }
+            
+            if (this.queue != null) { 
 
-        if (this.queue == null )  {
-            let status = await this.connectToJobQueue();
-            if (status == 0)
-                logger.error('redis error');
-        }
+                this.queue.on('ready', () => {
+                    logger.info('queue now ready to start doing things');
+                });
         
-        if (this.queue != null) { 
+                this.queue.on('error', (err) => {
+                    logger.error(`A queue error happened: ${err.message}`);
+                });
+                let result = await vault.read('crypto/operator');
+                pk = Buffer.from(result.data['pk'], 'hex');
+                this.queue.process(async (job) => {
+                    logger.info( `Processing job ${job.id}: ` + JSON.stringify(job.data));
+                    
+                    let marketplaceDB = new MarketplaceDB();
+                    let datasetInfo = await marketplaceDB.getDataSet(job.data['dataset_id']);
 
-            this.queue.on('ready', () => {
-                logger.info('queue now ready to start doing things');
-            });
-    
-            this.queue.on('error', (err) => {
-                logger.error(`A queue error happened: ${err.message}`);
-            });
-
-            this.queue.process(async (job) => {
-                logger.info( `Processing job ${job.id}: ` + JSON.stringify(job.data));
-                
-                let marketplaceDB = new MarketplaceDB();
-                let datasetInfo = await marketplaceDB.getDataSet(job.data['dataset_id']);
-
-                if ( datasetInfo != null) {
-                    let order:OrderDetail = {
-                        ...job.data,
-                        dataset_description: datasetInfo['description'],
-                        dataset_name: datasetInfo['name'],
-                        seller_id: datasetInfo['dataset_owner_id'],
-                        
-                    };
-                    let url = datasetInfo['access_url'];
-                    if  ( url != null) { 
-                        //get ipfs hash fromr access url
-                        let parts = url.split('/'); 
-                        order['data_loc_hash'] = parts.pop() || parts.pop();
-                    }
-                    logger.info("minting a token:");
-                    try { 
+                    if ( datasetInfo != null) {
+                        let order:OrderDetail = {
+                            ...job.data,
+                            dataset_description: datasetInfo['description'],
+                            dataset_name: datasetInfo['name'],
+                            seller_id: datasetInfo['dataset_owner_id'],
+                            
+                        };
+                        let url = datasetInfo['access_url'];
+                        if  ( url != null) { 
+                            //get ipfs hash fromr access url
+                            let parts = url.split('/'); 
+                            order['data_loc_hash'] = parts.pop() || parts.pop();
+                        }
+                        logger.info("minting a token:");
                         let nonce = await w3.eth.getTransactionCount(OPERATOR_ADDR, 'pending');
-                        const privateKey = Buffer.from(OPERATOR_PK, 'hex');
                         let txData= await tokenContract.methods.mint(
                                             order['id'],
                                             datasetInfo['data_hash'],
@@ -139,10 +131,10 @@ export class OrderProcessor {
                                 gasLimit: w3.utils.toHex(2100000),
                                 gasPrice: w3.utils.toHex(w3.utils.toWei('6', 'gwei')),
                                 data: txData  
-                              }
+                                }
                                 // Sign the transaction
                             const tx = new Tx(txObject);
-                            tx.sign(privateKey);
+                            tx.sign(pk);
                             
                             const serializedTx = tx.serialize();
                             const raw = '0x' + serializedTx.toString('hex');
@@ -156,12 +148,12 @@ export class OrderProcessor {
                             // save order to database
                         let result = await marketplaceDB.saveOrder(order);
                         logger.info(result);
-                        
-                    } catch (err) {
-                        logger.error (err);
                     }
-                }
-            });
+                });
+            }
+
+         } catch (err) {
+            logger.info*(err);
         }
     }
 }
