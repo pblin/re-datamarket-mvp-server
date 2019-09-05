@@ -3,7 +3,7 @@ import {VAULT_SERVER,VAULT_CLIENT_TOKEN,REDIS_HOST,REDIS_PORT,
         CHAIN_IP,CONTRACT_ADDR,OPERATOR_ADDR} from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
 import * as Web3 from 'web3';
-import * as loadJsonFile from 'load-json-file';
+const loadJsonFile = require ('load-json-file');
 
 const Tx = require('ethereumjs-tx');
 
