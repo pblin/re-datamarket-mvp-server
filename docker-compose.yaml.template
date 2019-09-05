@@ -1,0 +1,33 @@
+version: '3.6'
+services:
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+    - db_data:/var/lib/postgresql/data
+  graphql-engine:
+    image: hasura/graphql-engine:v1.0.0-alpha33
+    ports:
+    - "8081:8080"
+    depends_on:
+    - "postgres"
+    restart: always
+    environment:
+        APIKEY:
+        GRAPHQL:
+        VAULT_TOKEN:
+        VAULT_SERVER_TOKEN:
+        VAULT_SERVER:
+        HTTPS_ON:
+        KEY_PASS:
+        SSL_CERT:
+        SSL_KEY:
+        SMTP_HOST:
+        SMTP_PORT:
+        REDIS_HOST:
+        REDIS_PORT:
+        DATA_HOST_URL:
+        AZURE_TEXT_ANALYTICS:
+        AZURE_TEXT_ANALY_KEY:
+volumes:
+  db_data:

@@ -301,7 +301,7 @@ contract ReblocDatasetToken is ERC721Metadata("ReblocDatasetToken", "RDT"), IERC
             _applyCommission(_tokenId, _commission);
         }
         // now purchased - don't allow re-purchase!
-        emit PurchasedWithFiat(_tokenId, _buyer);
+        emit SoldWithFiat(_tokenId, _buyer);
     }
 
 

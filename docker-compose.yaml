@@ -1,0 +1,25 @@
+version: '3.6'
+services:
+  reblocapp:
+    image: bernardlin/reblocapp:beta
+    ports:
+    - "3000:3000"
+    depends_on:
+    - "api-server" 
+    - "orderprocessor"
+    - "dataapi"
+  api-server:
+    image: bernardlin/apiserver:beta
+    ports:
+    - "9000:9000"
+    restart: always
+    volumes:
+    - /tmp/serverlog:/tmp/serverlog
+  orderprocessor:
+    image: bernardlin/orderprocessor:beta
+    volumes:
+    - bernardlin/orderprocessor
+    restart: always
+  dataapi:
+    image: bernardlin/flaskapi:beta
+    restart: always

@@ -2,7 +2,6 @@ path "secret/*" {
   capabilities = ["create"]
 }
 
-
 path "database/*" {
   capabilities = ["create"]
 }

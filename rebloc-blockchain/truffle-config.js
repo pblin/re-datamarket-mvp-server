@@ -1,10 +1,16 @@
+var HDWalletProvider = require("truffle-hdwallet-provider");
+var fs = require('fs');
+var mnemonic = fs.readFileSync('./mnemonic.txt');
+// console.log(mnemonic.toString());
+
 module.exports = {
   networks: {
     // https://www.rinkeby.io/
     // https://blog.abuiles.com/blog/2017/07/09/deploying-truffle-contracts-to-rinkeby/
     rinkeby: {
-      host: "https://www.rinkeby.io",
-      port: 8545,
+      provider: function() { 
+        return new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/v3/2d21141376574da189cccef28362da65");
+       },
       network_id: 4,
       gas: 4500000, // Gas limit used for deploys
       gasPrice: 10000000000 // 10 gwei
