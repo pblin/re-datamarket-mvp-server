@@ -34,3 +34,4 @@ export const REDIS_HOST = process.env.REDIS_HOST;
 export const DATA_HOST_URL = process.env.DATA_HOST_URL
 export const AZURE_TEXT_ANALYTICS = process.env.AZURE_TEXT_ANALYTICS
 export const AZURE_TEXT_ANAL_KEY =  process.env.AZURE_TEXT_ANALY_KEY
+

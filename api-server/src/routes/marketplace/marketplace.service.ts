@@ -43,6 +43,8 @@ date_modified \
 sample_access_url \
 stage \
 asset_token_address \
+last_update \
+update_frequency \
 dataset_owner_id";
 
 export class MarketplaceService {
@@ -545,24 +547,25 @@ export class MarketplaceService {
                                         {buyer_id: {_eq: $userid}}, 
                                         {seller_id: {_eq: $userid}}
                                         ]
-                        }
+                            }
                         )
                     {
-                    id
-                    buyer_id
-                    buyer_wallet_addr
-                    seller_id
-                    seller_wallet_addr
-                    dataset_id
-                    dataset_name
-                    dataset_description
-                    data_loc_hash
-                    payment_txn_ref
-                    trade
-                    pricing_unit
-                    order_status
-                    order_timestamp
-                    settlement_txn_timestamp
+                        id
+                        buyer_id
+                        buyer_wallet_addr
+                        seller_id
+                        seller_wallet_addr
+                        dataset_id
+                        dataset_name
+                        dataset_description
+                        data_loc_hash
+                        payment_txn_ref
+                        trade
+                        pricing_unit
+                        order_status
+                        order_timestamp
+                        settlement_txn_timestamp
+                        blockchain_tx_id
                     }
                 }`
         let variables = {

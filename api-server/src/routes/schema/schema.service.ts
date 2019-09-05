@@ -31,6 +31,8 @@ data_compression \
 json_schema \
 date_created \
 date_modified \
+last_update \
+update_frequency \
 sample_access_url \
 enc_sample_key \
 stage \
