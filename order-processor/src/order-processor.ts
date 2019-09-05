@@ -1,6 +1,12 @@
 import * as Queue from 'bee-queue';
-import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT } from './config/Env';
+import {VAULT_SERVER,VAULT_CLIENT_TOKEN,REDIS_HOST,REDIS_PORT,
+        CHAIN_IP,CONTRACT_ADDR,OPERATOR_ADDR,OPERATOR_PK} from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
+import * as Web3 from 'web3';
+import * as loadJsonFile from 'load-json-file';
+
+const Tx = require('ethereumjs-tx');
+
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 
@@ -29,6 +35,8 @@ const logger = winston.createLogger({
     ]
   });
 
+const w3 = new Web3( new Web3.providers.HttpProvider(CHAIN_IP));
+
 export class OrderProcessor {
     queue: Queue;
     async connectToJobQueue() {
@@ -38,7 +46,7 @@ export class OrderProcessor {
 
         } 
         catch (err) {
-            logger.log ('error', "redis error " + err);
+            logger.error ("redis error " + err);
             return (0);
         }
 
@@ -68,7 +76,9 @@ export class OrderProcessor {
         return (1);
     }
     async process() {
-      
+        let contractJson  = await loadJsonFile('./src/abi/ReblocDatasetToken.json')
+        let tokenContract = new w3.eth.Contract(contractJson['abi'], CONTRACT_ADDR);
+
         if (this.queue == null )  {
             let status = await this.connectToJobQueue();
             if (status == 0)
@@ -96,7 +106,8 @@ export class OrderProcessor {
                         ...job.data,
                         dataset_description: datasetInfo['description'],
                         dataset_name: datasetInfo['name'],
-                        seller_id: datasetInfo['dataset_owner_id']
+                        seller_id: datasetInfo['dataset_owner_id'],
+                        
                     };
                     let url = datasetInfo['access_url'];
                     if  ( url != null) { 
@@ -104,10 +115,49 @@ export class OrderProcessor {
                         let parts = url.split('/'); 
                         order['data_loc_hash'] = parts.pop() || parts.pop();
                     }
+                    logger.info("minting a token:");
                     try { 
+                        let nonce = await w3.eth.getTransactionCount(OPERATOR_ADDR, 'pending');
+                        const privateKey = Buffer.from(OPERATOR_PK, 'hex');
+                        let txData= await tokenContract.methods.mint(
+                                            order['id'],
+                                            datasetInfo['data_hash'],
+                                            datasetInfo['data_compression'],
+                                            datasetInfo['num_of_records'],
+                                            order['data_loc_hash'],  //ipfs hash
+                                            order['trade'], // settlement price
+                                            order['pricing_unit'],
+                                            url
+                                        );
+                        txData = txData.encodeABI();
+                        await w3.eth.getTransactionCount(OPERATOR_ADDR, (err, txCount) => {
+                            // Build the transaction
+                            const txObject = {
+                                nonce:    w3.utils.toHex(txCount),
+                                to:       CONTRACT_ADDR,
+                                value:    w3.utils.toHex(w3.utils.toWei('0', 'ether')),
+                                gasLimit: w3.utils.toHex(2100000),
+                                gasPrice: w3.utils.toHex(w3.utils.toWei('6', 'gwei')),
+                                data: txData  
+                              }
+                                // Sign the transaction
+                            const tx = new Tx(txObject);
+                            tx.sign(privateKey);
+                            
+                            const serializedTx = tx.serialize();
+                            const raw = '0x' + serializedTx.toString('hex');
+                            
+                            // Broadcast the transaction
+                            const transaction = w3.eth.sendSignedTransaction(raw, (err, tx) => {
+                                order['blockchain_tx_id'] = tx;
+                                logger.info(tx);
+                            });
+                        });
+                            // save order to database
                         let result = await marketplaceDB.saveOrder(order);
                         logger.info(result);
-                    }catch (err) {
+                        
+                    } catch (err) {
                         logger.error (err);
                     }
                 }

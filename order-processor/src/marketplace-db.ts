@@ -62,7 +62,10 @@ const logger = winston.createLogger({
     transports: [
         transport
     ]
-  });export class MarketplaceDB {
+  });
+  
+  
+export class MarketplaceDB {
     client: GraphQLClient;
     constructor() {
         this.client = Db.getInstance().client;
