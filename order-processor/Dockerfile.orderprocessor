@@ -4,6 +4,7 @@ WORKDIR /app
 RUN mkdir /tmp/orderlog
 
 COPY . /app
+RUN yarn add sha3 
 RUN yarn
 
 ENTRYPOINT  ["yarn"]
