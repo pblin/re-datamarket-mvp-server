@@ -4,7 +4,10 @@ WORKDIR /app
 RUN mkdir /tmp/orderlog
 
 COPY . /app
-RUN yarn add sha3 
+RUN apk update 
+RUN apk add python
+#RUN apk add g++
+#RUN apk add make
 RUN yarn
 
 ENTRYPOINT  ["yarn"]
