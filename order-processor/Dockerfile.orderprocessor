@@ -1,4 +1,4 @@
-FROM node:10.15.3-alpine
+FROM node:12.10.0-alpine
 
 WORKDIR /app 
 RUN mkdir /tmp/orderlog
@@ -6,8 +6,8 @@ RUN mkdir /tmp/orderlog
 COPY . /app
 RUN apk update 
 RUN apk add python
-#RUN apk add g++
-#RUN apk add make
+RUN apk add g++
+RUN apk add make
 RUN yarn
 
 ENTRYPOINT  ["yarn"]

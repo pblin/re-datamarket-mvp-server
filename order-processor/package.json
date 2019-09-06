@@ -41,6 +41,9 @@
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^3.9.0"
   },
+  "resolutions": {
+    "sha3": "^1.2.0"
+  },
   "scripts": {
     "build": "rm -rf dist && tsc",
     "start": "yarn run ts-node src/index.ts",
