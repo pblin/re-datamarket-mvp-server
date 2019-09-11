@@ -45,6 +45,7 @@ stage \
 asset_token_address \
 last_update \
 update_frequency \
+geolocation \
 dataset_owner_id";
 
 export class MarketplaceService {
@@ -528,9 +529,10 @@ export class MarketplaceService {
         draft_order['id'] = order_id
 
         let job  = this.queue.createJob (draft_order);
+        let jobStr = JSON.stringify(job);
 
         try { 
-            job.save().then(( job) => { logger.info(`job = ${job}`) });
+            job.save().then(( job) => { logger.info(`job = ${jobStr}`) });
         } catch (err) {
             logger.error(err);
             return 'redi-err';

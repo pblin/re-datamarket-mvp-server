@@ -94,8 +94,8 @@ router.get('/search', (req, res) => {
     let draft_order:OrderInput = req.body;
     // console.log(req.body);
     draft_order['id'] = -1;
-
-    logger.info(`draft order = ${draft_order}`);
+    let draftOrderStr = JSON.stringify(draft_order);
+    logger.info(`draft order = ${draftOrderStr}`);
     return marketplaceService.submitOrder(draft_order).then (result => {
             if (result == 'redis_err' || result == 'q_err') {
                 if (result == 'redis_err')
