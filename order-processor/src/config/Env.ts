@@ -25,4 +25,7 @@ export const CHAIN_IP = process.env.CHAIN_IP
 export const OPERATOR_ADDR = process.env.OPERATOR_ADDR
 export const CONTRACT_ADDR = process.env.CONTRACT_ADDR
 
+export const DATA_HOST_URL = process.env.DATA_HOST_URL
+
+
 

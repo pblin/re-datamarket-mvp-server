@@ -37,14 +37,47 @@ export interface OrderDetail {
     blockchain_tx_id: string,
     buyer_wallet_addr: string,
     seller_wallet_addr: string,
+    seller_email: string,
     data_loc_hash: string,
+    data_hash:string,
+    data_compression: string,
     order_timestamp: string,
     dataset_name: string,
     dataset_description: string,
+    num_of_records: number,
+    access_url: string,
     payment_txn_ref: string,
+
     settlement_txn_timestamp: string
 
 };
+
+export interface OrderLog {
+    id: string,
+    dataset_id: number,
+    dataset_description: string,
+    dataset_name: string,
+    buyer_id: number,
+    seller_id: number,
+    bid: number,
+    offer: number,
+    trade: number,
+    order_status: number,
+    payment_txn_ref: string,
+    buyer_wallet_addr: string,
+    seller_wallet_addr: string,
+    data_loc_hash: string,
+    order_timestamp: string,
+    pricing_unit: string,
+    settlement_txn_timestamp: string
+    blockchain_tx_id: string,
+};
+
+const profileCols = 
+    "id \
+    primary_email \
+    wallet_address_1 \
+    wallet_address_2 ";
 
 const winston = require('winston');
 require('winston-daily-rotate-file');
@@ -98,6 +131,21 @@ export class MarketplaceDB {
              logger.error( err);
          }
       }
+      async getProfileWithId(id: number) {
+        const query = `query customer ($id: Int) {
+          marketplace_customer (where:{id :{ _eq : $id}})
+          {
+            ${profileCols}
+          }
+        }`;
+        const variables = {
+             id
+        };
+
+        let result = await this.client.request (query, variables);
+        logger.info(result['marketplace_customer'][0]);
+        return result['marketplace_customer'][0];
+    }
     
       async saveOrder (order:OrderDetail) {
         const mut = `mutation upsert_marketplace_order_book
@@ -134,9 +182,30 @@ export class MarketplaceDB {
         let variables = {
           objects: []
         }; 
-        order.blockchain_tx_id = 'N/A';
-        order.settlement_txn_timestamp = order.order_timestamp;
-        variables.objects.push(order);
+        
+        let current_date = new Date();
+        let order_log:OrderLog = {
+            id: order.id,
+            dataset_id: order.dataset_id,
+            dataset_description: order.dataset_description,
+            dataset_name: order.dataset_name,
+            buyer_id: order.buyer_id,
+            seller_id: order.seller_id,
+            bid: order.bid,
+            offer: order.offer,
+            trade: order.trade,
+            order_status: order.order_status,
+            payment_txn_ref: order.payment_txn_ref,
+            buyer_wallet_addr: order.buyer_wallet_addr,
+            seller_wallet_addr: order.buyer_wallet_addr,
+            data_loc_hash: order.data_loc_hash,
+            order_timestamp: order.order_timestamp,
+            pricing_unit: order.pricing_unit,
+            settlement_txn_timestamp: current_date.toDateString(),
+            blockchain_tx_id: order.blockchain_tx_id,
+        };
+
+        variables.objects.push(order_log);
         // console.log(mut);
         // console.log(variables);
         logger.info(JSON.stringify(variables));
