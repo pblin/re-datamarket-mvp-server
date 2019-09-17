@@ -228,17 +228,16 @@ export class SchemaService {
         let datasetInfo = await this.getAdataset(id, 0);
         let parts = datasetInfo['sample_access_url'].split('/'); 
         let file_hash = parts.pop() || parts.pop();
-        const url = DATA_HOST_URL + '/' + datasetInfo['enc_sample_key'] + '/' + file_hash;
+        const url = DATA_HOST_URL + 'decrypt/' + datasetInfo['enc_sample_key'] + '/' + file_hash;
         console.log(url);
         const options ={
             uri: url,
             method: 'GET',
             rejectUnauthorized: false
         };
-
+        logger.info(url);
         let response = await fetch(options);
-        // console.log(response);
-        // console.log(JSON.stringify(response));
+        console.log(JSON.stringify(response));
         return response;
     }
     findIndex(items:any,name:string){
