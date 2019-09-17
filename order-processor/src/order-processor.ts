@@ -142,7 +142,7 @@ export class OrderProcessor {
                             order['data_loc_hash'] = parts.pop() || parts.pop();
                         }
                         const web3TxUrl = DATA_HOST_URL + 'tx/send';
-                        console.log(web3TxUrl);
+                    
                         const options ={
                             uri: web3TxUrl,
                             method: 'POST',
@@ -150,10 +150,10 @@ export class OrderProcessor {
                             json: true,
                             rejectUnauthorized: false
                         };
-                        console.log(options);
+                        logger.info(JSON.stringify(options));
 
                         let response = await fetch(options);
-                        console.log(response);
+                        logger.info(response);
                         
                         if (response['status'] == 'ok') {
                             order['blockchain_tx_id'] = response['txn_hash'];

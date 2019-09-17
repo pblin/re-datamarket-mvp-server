@@ -2,9 +2,9 @@ var ReblocDatasetToken = artifacts.require("ReblocDatasetToken");
 
 module.exports = function(deployer, network, accounts) {
     // const operator = accounts[0];
-    const operator = '0x9346e8A0C76825Cd95BC3679ab83882Fd66448Ab';
+    const operator = '{oerator's wallet address}';
     deployer.deploy(ReblocDatasetToken, operator, 
-                                        {   from: '0x9346e8A0C76825Cd95BC3679ab83882Fd66448Ab',
+                                        {   from: '{operator's wallet address',
                                             gas: 4500000,
                                             gasPrice: 10000000000
                                         });
