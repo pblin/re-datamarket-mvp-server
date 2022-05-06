@@ -6,7 +6,7 @@ import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
 
 const router = express.Router();
-const supportEmail = 'support@rebloc.io';
+const supportEmail = 'bl@silverlaketek.com';
 router.post('/:address', async (req, res) => {
   logger.info(JSON.stringify(req.body));
   
@@ -82,7 +82,7 @@ router.post('/:address', async (req, res) => {
 });
 
 router.post('/:address/send/:ownerid', async (req, res) => {
-  // logger.info(JSON.stringify(req.body));
+  console.log(JSON.stringify(req.body));
 
   const emailFrom = req.params.address;
   let receiverProfile;
@@ -123,6 +123,7 @@ router.post('/:address/send/:ownerid', async (req, res) => {
                                           req.body.subject, 
                                           emailText);
     } catch (err) {
+      console.log ("email service error");
       logger.error(err);
       res.status(500).send("eamil server error");
   }

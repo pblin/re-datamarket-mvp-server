@@ -63,7 +63,7 @@ async function processStripeCharge(userid:string, payload:any)
         description: description,
         receipt_email: stripeEmail,
         source: stripeToken,
-        statement_descriptor: 'Rebloc marketplace',
+        statement_descriptor: 'decentral data marketplace',
         metadata: {
           customerId: userid,
           productId: product

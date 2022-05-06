@@ -13,7 +13,7 @@ const nodemailer = require("nodemailer");
 const logger = new LogService().getLogger();
 
 export class EmailService {
-    adminEmail = 'support@rebloc.io';
+    adminEmail = 'bl@silverlaketek.com';
 
     async sendmail( fromEmail: string, 
                     toEmail: string, 
@@ -22,8 +22,15 @@ export class EmailService {
                     message: string) {
             
             let emailPass; 
-            let result = await vault.read('secret/email');
-            // logger.info (result['data']);
+            let result;
+            try {
+                result = await vault.read('secret/email');
+            } catch (err)
+                {
+                    console.log("vault error=" + err);
+                    logger.info(err);
+                    return null;
+                }
 
             if (result == null || result['data'] == null || result['data'] === undefined) 
                 return "server error";
@@ -51,7 +58,11 @@ export class EmailService {
             };    
             // send mail with defined transport object
             let info = null;
-            info = await transporter.sendMail(mailOptions)
+            try { 
+                info = await transporter.sendMail(mailOptions);
+            } catch (err) {
+                console.log("mail server problem: " + err);
+            }
             return info;
     }
 }
