@@ -1,5 +1,4 @@
-import {VAULT_SERVER,VAULT_CLIENT_TOKEN,REDIS_HOST,REDIS_PORT,
-        CHAIN_IP,CONTRACT_ADDR,OPERATOR_ADDR, DATA_HOST_URL} from './config/Env';
+import {VAULT_SERVER,VAULT_CLIENT_TOKEN,REDIS_HOST,REDIS_PORT, REDIS_TOKEN, DATA_HOST_URL} from './config/Env';
 import {MarketplaceDB, OrderDetail} from './marketplace-db';
 import * as Web3 from 'web3';
 import * as uuidParse from 'uuid-parse';
@@ -41,34 +40,39 @@ const logger = winston.createLogger({
 export class OrderProcessor {
     queue;
     async connectToJobQueue() {
-        let result = await vault.read('secret/azureredis');
-        this.queue = new Queue('orders', {
-            prefix: 'bq',
-            stallInterval: 5000,
-            nearTermWindow: 1200000,
-            delayedDebounce: 1000,
-            redis: {
-                host: REDIS_HOST,
-                port: REDIS_PORT,
-                db: 0,
-                auth_pass: result.data['skey'], 
-                tls: {servername: REDIS_HOST},
-                options: {}
-            },
-            isWorker: true,
-            getEvents: true,
-            sendEvents: true,
-            storeJobs: true,
-            ensureScripts: true,
-            activateDelayedJobs: false,
-            removeOnSuccess: false,
-            removeOnFailure: false,
-            redisScanCount: 100
-        });
+        //let result = await vault.read('secret/azureredis');
+        console.log("connecting to queue");
+        try {
+                this.queue = new Queue('orders', {
+                prefix: 'bq',
+                stallInterval: 5000,
+                nearTermWindow: 1200000,
+                delayedDebounce: 1000,
+                redis: {
+                    host: REDIS_HOST,
+                    port: REDIS_PORT,
+                    db: 0,
+                    auth_pass: REDIS_TOKEN, 
+                    tls: {servername: REDIS_HOST},
+                    options: {}
+                },
+                isWorker: true,
+                getEvents: true,
+                sendEvents: true,
+                storeJobs: true,
+                ensureScripts: true,
+                activateDelayedJobs: false,
+                removeOnSuccess: false,
+                removeOnFailure: false,
+                redisScanCount: 100
+            });
+        } catch (err) {
+            console.log("queue connection error "+err)
+        }
         return (1);
     }
     async process() {
-        logger.info ("chain provider " + CHAIN_IP);
+        //logger.info ("chain provider " + CHAIN_IP);
         // const w3 = new Web3( new Web3.providers.HttpProvider(CHAIN_IP));
         // const accounts = await w3.eth.getAccounts();
         // console.log(accounts);
@@ -87,13 +91,15 @@ export class OrderProcessor {
                     logger.error('redis error');
             } 
         } catch (err) {
+            console.log(err);
             logger.info(err);
         }
             
         if (this.queue != null) { 
 
             this.queue.on('ready', () => {
-                logger.info('queue now ready to start doing things');
+                console.log("queue is ready.")
+                logger.info('queue now ready to start doing things.');
             });
     
             this.queue.on('error', (err) => {
