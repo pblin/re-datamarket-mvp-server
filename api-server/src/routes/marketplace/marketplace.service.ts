@@ -1,11 +1,13 @@
 import {Db} from '../../db/Db';
 import {GraphQLClient} from 'graphql-request';
 import * as Queue from 'bee-queue';
-import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT, 
+import { VAULT_SERVER, VAULT_CLIENT_TOKEN, REDIS_HOST, REDIS_PORT, REDIS_TOKEN,
          AZURE_TEXT_ANAL_KEY, AZURE_TEXT_ANALYTICS } from '../../config/ConfigEnv';
 
 import * as uuidv4 from 'uuid/v4';
 import { LogService } from '../../utils/logger';
+import { isCompositeType } from 'graphql';
+import { EDEADLK } from 'constants';
 // import { listenerCount } from 'cluster';
 const logger = new LogService().getLogger();
 
@@ -55,14 +57,14 @@ export class MarketplaceService {
         this.client = Db.getInstance().client;
     }
     async connectToJobQueue() {
-        let result;
-        try { 
-            result = await vault.read('secret/azureredis');
-        } 
-        catch (err) {
-            logger.error(err);
-            return (0);
-        }
+        // let result;
+        // try { 
+        //     result = await vault.read('secret/azureredis');
+        // } 
+        // catch (err) {
+        //     logger.error(err);
+        //     return (0);
+        // }
         try { 
             this.queue = new Queue('orders', {
                 prefix: 'bq',
@@ -73,7 +75,7 @@ export class MarketplaceService {
                     host: REDIS_HOST,
                     port: REDIS_PORT,
                     db: 0,
-                    auth_pass: result.data['skey'], 
+                    auth_pass: REDIS_TOKEN,
                     tls: {servername: REDIS_HOST},
                     options: {}
                 },
@@ -110,57 +112,6 @@ export class MarketplaceService {
         }
     }
    
-    // filterCountry (toFilter:any,country:string) 
-    // {
-    //     for (let i=0; i < toFilter.length; i++)
-    //         if (toFilter[i]['country'] != country)
-    //             delete toFilter[i];
-    // }
-
-    // filterState (toFilter:any,state:string) 
-    // {
-
-    //     for (let i=0; i < toFilter.length; i++)
-    //     if (toFilter[i]['state'] != state)
-    //         delete toFilter[i];
-    // }
-
-    // filterCity (toFilter:any,cities:string) 
-    // {
-    //     let cityArray = cities.split(',');
-    //     let i = 0;
-    //     let match = false;
-    //     for ( ;i < toFilter.length; i++) {
-    //         for (let city in cityArray)
-    //             match = match || toFilter[i]['city'].includes(city);
-
-    //         if (!match)  // no match in any the cities
-    //             delete toFilter[i];
-    //         else  // found match reset for next item
-    //             match = false; 
-    //     }
-    // }
-
-    // filterTopic (toFilter:any,topics:string) 
-    // {
-    //     console.log('filter topic');
-    //     let topicArray = topics.split(',');
-    //     console.log(topicArray);
-    //     let i = 0;
-    //     let match = false;
-    //     for ( ;i < toFilter.length; i++) {
-    //         for (let j = 0; j < topicArray.length; j++) {
-    //             let topic = topicArray[j];
-    //             // console.log(topic);
-    //             match = match || toFilter[i]['topic'].includes(topic);
-    //         }
-
-    //         if (!match)  // no match in any the topics
-    //             delete toFilter[i];
-    //         else  // found match reset for next item
-    //             match = false; 
-    //     }
-    // }
     findIndex(items:any,name:string){
         let found = -1;
         for (let i=0; i < items.length; i++)
@@ -385,13 +336,16 @@ export class MarketplaceService {
             },
             body: JSON.stringify(payload)
         };
-        // console.log("input:"+new_terms);
+        console.log("input:"+new_terms);
+
         try {
             logger.info(entities_api_loc);
             logger.info(options);
             let response = await request(entities_api_loc,options);
             logger.info(response);
             let data = JSON.parse(response);
+            console.log(data);
+            
             let token = data['documents'][0]['entities'];
             logger.info("entities:" + token);
 
@@ -433,6 +387,8 @@ export class MarketplaceService {
             logger.info("post processed terms:" + new_terms);
 
          } catch (err) {
+            console.log("processterm error");
+            console.log(err);
             logger.error(err)
         }
         return new_terms;
@@ -466,8 +422,17 @@ export class MarketplaceService {
                     }
             }`
         logger.info(query);
-        let data = await this.client.request(query);
+        console.log(query);
+        let data = {};
+        try {
+            data = await this.client.request(query);
+        } catch (err)
+        {
+            console.log('graphQL request issues');
+            console.log(err);
+        }
 
+        console.log("data= " + data);
         if ( data['marketplace_search_dataset'] !== undefined ) {
             let result = data['marketplace_search_dataset'];
             let response = {
@@ -584,86 +549,4 @@ export class MarketplaceService {
         }
     }
 
-    // async  getDataFields(country:string, region:string, terms:string) { 
-    //     let query =  `query data_fields ($country:String, $region: String) {
-    //         marketplace_source_of_field (
-    //           where: { _and:[ 
-    //             				 {country: { _eq: $country}},
-    //           					 {region: { _eq: $region}}
-    //         				]
-    //         		}
-    //         	) 
-    //         {
-    //           source_id
-    //           field_label
-    //           search_terms
-    //         }
-    //       }`
-
-    //     let variables = {};
-    //     if ( country != '' && region != '') {
-    //         variables = {
-    //             country,
-    //             region
-    //         }
-    //     } else {
-    //         if (country != '') {
-    //             variables = {
-    //                 country
-    //             }
-    //         } else {
-    //             if (region != '') {
-    //                 variables = {
-    //                     region
-    //                  }
-    //             }
-    //         }
-    //     }
-    //     // console.log(variables);
-    //     let data = await this.client.request(query,variables);
-        
-    //     let x = 0;
-    //     let hitList = [];
-    //     if ( data ['marketplace_source_of_field'] !== undefined ) {
-    //         let objList = data ['marketplace_source_of_field'];
-    //         // console.log(objList.length);
-    //         for (var i = 0; i <  objList.length; i++ ) {
-    //             let isTermClose = 0;
-    //             let searchTermList = objList[i]['search_terms'];
-    //             if (searchTermList != null) {
-    //                 for (let j in searchTermList ) {
-    //                     // console.log (searchTermList[j]);
-    //                     if (fuzz.token_set_ratio(searchTermList[j],terms) > 60) {
-    //                             isTermClose = 1; //found a match
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-    //             if (fuzz.token_set_ratio(terms, objList[i]['field_label']) > 60 || isTermClose > 0 ) {
-    //                     if ( hitList.indexOf(objList[i]['source_id']) == -1) {
-    //                         hitList.push(objList[i]['source_id']);
-    //                     }
-    //                 }
-    //             }
-    //         }
-        
-    //     query = `query get_source_details ($objects:[String]) {
-    //         marketplace_data_source_detail (
-    //         where: { id: {_in: $objects} }
-    //         ){
-    //         ${mktDsCols}
-    //         }
-    //     }`
-    //     variables = {
-    //         objects: hitList
-    //         }
-    //     logger.info(`hist list = ( ${hitList} )`);
-    //     data = await this.client.request(query,variables);
-        
-    //     if (data['marketplace_data_source_detail'] !== undefined ) {
-    //         return data['marketplace_data_source_detail'];
-    //     } else {
-    //         return null;
-    //     }
-    // }
 }
