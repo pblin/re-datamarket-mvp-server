@@ -51,7 +51,7 @@ export class StripeServices {
       try {
         result = await vault.read('secret/stripe');
       }
-
+      // @ts-ignore
       stripe = new Stripe(result.data['skey']);
 
       if (stripeTokenType === 'card') {
