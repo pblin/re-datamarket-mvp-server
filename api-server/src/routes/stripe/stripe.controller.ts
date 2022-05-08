@@ -2,7 +2,6 @@ import * as express from 'express';
 import { StripeServices } from './stripe.service';
 import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
-const stripService = new stripeService();
 const router = express.Router();
 // var AsyncRouter = require("express-async-router").AsyncRouter;
 // var router = AsyncRouter();
