@@ -64,7 +64,7 @@ async function processStripeCharge(userid:string, payload:any)
           description: description,
           receipt_email: stripeEmail,
           source: stripeToken,
-          statement_descriptor: 'decentral data marketplace',
+          statement_descriptor: 'NFT marketplace',
           metadata: {
             customerId: userid,
             productId: product
