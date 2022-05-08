@@ -6,7 +6,6 @@ import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
 import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
 const router = express.Router();
-const asyncRouter = require('route-async')
 const upload = multer();
 
 const options = {
@@ -89,21 +88,16 @@ async function processStripeCharge(userid:string, payload:any)
   return {status, ref: id, timestamp: created };
 }
 
-router.post('/charge/:userid', upload.none(), async (req, res) => {
+router.post('/charge/:userid', upload.none(), (req, res) => {
   logger.info(JSON.stringify(req.body));
   if (req.params.userid === undefined) 
     res.sendStatus(404).send("user id needed");
-  let result;
-  try {
-    result = await processStripeCharge(req.params.userid, req.body); 
+  return processStripeCharge(req.params.userid, req.body).then ( (result) => {
     logger.info(result);
     if (result['status']['ref'] != "ok")
           res.status(500).send(result);
         else 
           res.status(200).send(result);
-  } catch (err){
-    res.status(400).json({status:{ref:"failed", error:err}});
-  }
 });
 
-export default asyncRouter(router);
+export default router;
