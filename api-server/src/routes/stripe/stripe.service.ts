@@ -98,6 +98,7 @@ router.post('/charge/:userid', upload.none(), (req, res) => {
           res.status(500).send(result);
         else 
           res.status(200).send(result);
+  })
 });
 
 export default router;
