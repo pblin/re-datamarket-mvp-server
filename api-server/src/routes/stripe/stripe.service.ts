@@ -93,6 +93,7 @@ async function processStripeCharge(userid:string, payload:any)
 }
 
 router.post('/charge/:userid', upload.none(), (req, res) => {
+  console.log('charge...');
   logger.info(JSON.stringify(req.body));
   if (req.params.userid === undefined) 
     res.sendStatus(404).send("user id needed");
