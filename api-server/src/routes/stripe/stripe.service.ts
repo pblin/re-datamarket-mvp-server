@@ -51,13 +51,12 @@ export class StripeServices {
       try {
         result = await vault.read('secret/stripe');
       }
-      // @ts-ignore
-      stripe = new Stripe(result.data['skey']);
 
       if (stripeTokenType === 'card') {
         const idempotency_key = uuidv4();
         try { 
-            charge = await stripe.charges.create(
+            // @ts-ignore
+            charge = await new Stripe(result.data['skey']).stripe.charges.create(
             {
               amount: amount,
               currency: currency,
