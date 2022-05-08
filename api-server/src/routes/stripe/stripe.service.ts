@@ -5,8 +5,12 @@ import * as uuidv4 from 'uuid/v4';
 import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
 import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
-const router = express.Router();
 const upload = multer();
+// const router = express.Router();
+var AsyncRouter = require("express-async-router").AsyncRouter;
+var router = AsyncRouter();
+
+
 
 const options = {
   apiVersion: 'v1', // default
