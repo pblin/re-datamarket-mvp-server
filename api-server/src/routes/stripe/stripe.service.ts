@@ -2,7 +2,7 @@
 import * as Stripe from 'stripe';
 import * as multer from 'multer';
 import * as uuidv4 from 'uuid/v4';
-import { VAULT_SERVER, VAULT_CLIENT_TOKEN } from '../../config/ConfigEnv';
+import { VAULT_SERVER, VAULT_CLIENT_TOKEN, STRIPE_KEY } from '../../config/ConfigEnv';
 import { LogService } from '../../utils/logger';
 const logger = new LogService().getLogger();
 const upload = multer();
@@ -13,8 +13,7 @@ const options = {
   token:  VAULT_CLIENT_TOKEN // optional client token; 
 };
 
-const vault = require("node-vault")(options);
-
+const stripe = require('stripe')(STRIPE_KEY); 
 export class StripeServices {
     async processCharge(userid:string, payload:any) 
     {
@@ -46,16 +45,16 @@ export class StripeServices {
       let status = { ref: "failed" };
       let id = 'na';
       let created = 0;
-      let charge = {id, created};
-
-      try {
-        result = await vault.read('secret/stripe');
-      } catch (err)
-      {
-        console.log("vault error" + err);
-        logger.info("something wrong with vault" + err);
-      }
-      stripe = new Stripe(result.data['skey']);
+      let charge; 
+      
+      // var vault = require("node-vault")(options);
+      // try {
+      //   result = await vault.read('secret/stripe');
+      // } catch (err)
+      // {
+      //   console.log("vault error" + err);
+      //   logger.info("something wrong with vault" + err);
+      // }
 
       if (stripeTokenType === 'card') {
         const idempotency_key = uuidv4();
@@ -67,7 +66,7 @@ export class StripeServices {
               currency: currency,
               description: description,
               receipt_email: stripeEmail,
-              source: stripeToken,
+              source: stripeToken.id,
               statement_descriptor: 'NFT marketplace',
               metadata: {
                 customerId: userid,
@@ -88,10 +87,15 @@ export class StripeServices {
           status.ref = `Unrecognized Stripe token type: "${stripeTokenType}"`;
           return {status, ref: id, timestamp: created };
       }
-      status.ref = "ok",
-      id = charge.id;
-      created = charge.created;
-      logger.info ('CC charge ok');
+      if (charge.status === 'succeeded') {
+        status.ref = "ok",
+        id = charge.id;
+        created = charge.created;
+        logger.info ('CC charge ok');
+      } else {
+        status.ref = "failed";
+        logger.info ('CC charge failed');
+      }
       return {status, ref: id, timestamp: created };
     }
 }
