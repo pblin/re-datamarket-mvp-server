@@ -35,4 +35,5 @@ export const REDIS_TOKEN = process.env.REDIS_TOKEN;
 export const DATA_HOST_URL = process.env.DATA_HOST_URL
 export const AZURE_TEXT_ANALYTICS = process.env.AZURE_TEXT_ANALYTICS
 export const AZURE_TEXT_ANAL_KEY =  process.env.AZURE_TEXT_ANALY_KEY
+export const STRIPE_KEY =  process.env.STRIPE_KEY
 
