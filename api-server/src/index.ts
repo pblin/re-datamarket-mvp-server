@@ -6,7 +6,7 @@ import ProfileRouter from './routes/profile/profile.controller';
 import SchemaRouter  from './routes/schema/schema.controller';
 import MarketplaceRouter from './routes/marketplace/marketplace.controller';
 import Emailer from './routes/email/email.controller';
-import FiatService from './routes/stripe/stripe.controller';
+import FiatService from './routes/stripe/stripe.service';
 const app = express();
 const methodOverride = require('method-override');
 import { HTTPS_ON, KEY_PASS, SSL_PFX, SSL_KEY, SSL_CERT } from './config/ConfigEnv';
@@ -33,10 +33,7 @@ app.use('/schema', SchemaRouter);
 app.use('/marketplace', MarketplaceRouter);
 app.use('/stripe', FiatService);
 app.use('/emailer', Emailer);
-console.log ("HTTPS="+HTTPS_ON);
-console.log ("SSL_KEY="+SSL_KEY);
-console.log ("SSL_CERT="+SSL_CERT);
-
+ 
 if (HTTPS_ON == 'YES') { 
    let credentials; 
    if (SSL_PFX != null) {

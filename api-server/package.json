@@ -1,6 +1,6 @@
 {
   "name": "api_server",
-  "author": "Bernard Lin <bernard.lin@rebloc.io>",
+  "author": "Bernard Lin <bernardlin@outlook.com>",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -17,6 +17,7 @@
     "crypto": "^1.0.1",
     "ethereumjs-wallet": "^0.6.3",
     "express": "^4.16.4",
+    "express-asyncify": "^1.0.1",
     "express-promise-router": "^3.0.3",
     "fetch": "^1.1.0",
     "fibers": "^3.1.1",
@@ -35,7 +36,7 @@
     "request-promise": "^4.2.4",
     "route-async": "^1.0.5",
     "string-hex": "^1.0.0",
-    "stripe": "^6.28.0",
+    "stripe": "^6.36.0",
     "uuid": "^3.3.2",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^3.9.0"

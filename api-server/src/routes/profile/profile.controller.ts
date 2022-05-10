@@ -3,7 +3,6 @@ import {ProfileService, ProfileData} from "./profile.service";
 
 const router = express.Router();
 const profileService = new ProfileService();
-
 /* GET users listing. */
 router.get('/:email', (req, res, next) => {
     return profileService.getProfile(req.params.email).then((result) => {
@@ -23,9 +22,11 @@ router.get('/:email', (req, res, next) => {
 });
 
 router.post('/verify/:email', (req, res) => {
+    console.log("verify " + req.params.email);
     if (req.params.email == null || req.body.code == null ) {
         return res.sendStatus(404);
     }
+    var profileService = new ProfileService();
     return profileService.verifyEmail(req.params.email, req.body.code).then((verification) => {
             return res.send(verification);
         }).catch((err) => {
@@ -38,6 +39,7 @@ router.post('/confirm/:which', (req, res) => {
     if (req.params.which) {
         return res.sendStatus(404);
     }
+    var profileService = new ProfileService();
     let profile:ProfileData = req.body; 
     let email;
     if (req.params.which == 2) 
@@ -54,7 +56,8 @@ router.post('/', (req, res) => {
         email = profile.secondary_email;
     else
         email = profile.primary_email;
-
+        
+    var profileService = new ProfileService();
     // console.log ("email=" + email);
     return profileService.sendVerification(email, profile).then((profile) => {
                 return profileService.upsertProfile(profile);

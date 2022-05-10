@@ -14,7 +14,6 @@ const options = {
   token:  VAULT_SERVER_TOKEN // optional client token; 
 };
 
-const vault = require("node-vault")(options);
 const hex = require('string-hex');
 const crypto = require("crypto");
 const ethWallet = require("ethereumjs-wallet");
@@ -119,7 +118,7 @@ export class ProfileService {
     async sendVerification(email:string, profile:ProfileData) {
             if (email == null) //nothing to verify
                 return profile;
-
+           
             if (email == profile.primary_email && profile.primary_email_verified) 
                 return profile; //already verified
 
@@ -134,7 +133,7 @@ export class ProfileService {
             //let hash = crypto.createHash('sha256').update(uuid()).digest("base64");
             let hash = uuid();
             //TODO: make this url configurable
-            let confirmLink = encodeURIComponent(`https://demo-app.rebloc.io:3000/VerificationPage?email=${email}&code=${hash}`);
+            let confirmLink = encodeURIComponent(`https://godscoin.co:3000/VerificationPage?email=${email}&code=${hash}`);
             let confirmationText = 
                 `<div>
                     <div>
@@ -148,9 +147,9 @@ export class ProfileService {
             try { 
                 logger.info(confirmationText);
                 let info = await emailService.sendmail(
-                                    "support@rebloc.io",
+                                    "bl@silverlaketek.com",
                                     email,
-                                    "support@rebloc.io",
+                                    "bl@silverlaketek.com",
                                     "Verify your email address",
                                     confirmationText);
             } catch (err) {
@@ -172,7 +171,8 @@ export class ProfileService {
         let email2Hex = hex(profile.primary_email);
         const walletKey = `secret/${email2Hex}-1`;
         logger.info ('wallet key =' + walletKey);
-
+        var vault = require("node-vault")(options);
+        
         let walletPKQuery = null;
         let address_1 = null;
         try { 
@@ -238,10 +238,15 @@ export class ProfileService {
 
     async verifyEmail (email:string, code:string) {
         let profile:ProfileData;
-        let result  = await this.getProfile(email);
-        profile = result.data;
-        logger.info(profile);
-
+        let result;
+        try {
+            result = await this.getProfile(email);
+            profile = result.data;
+        } catch (err) {
+            console.log (err);
+            return false;
+        }
+        console.log(profile);
         if (profile == null)
             return false;
 
