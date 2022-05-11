@@ -56,37 +56,33 @@ async function processStripeCharge(userid:string, payload:any)
 
   if (stripeTokenType === 'card') {
     const idempotency_key = uuidv4();
-    try { 
-      charge = await stripe.charges.create(
-        {
-          amount: amount,
-          currency: currency,
-          description: description,
-          receipt_email: stripeEmail,
-          source: stripeToken,
-          statement_descriptor: 'NFT marketplace',
-          metadata: {
-            customerId: userid,
-            productId: product
-          }
-        },
-        {
-          idempotency_key,
+    charge = await stripe.charges.create(
+      {
+        amount: amount,
+        currency: currency,
+        description: description,
+        receipt_email: stripeEmail,
+        source: stripeToken,
+        statement_descriptor: 'Rebloc marketplace',
+        metadata: {
+          customerId: userid,
+          productId: product
         }
-      );
-    } catch (err) {
-      console.log ('stripe charge error');
-      console.log (err);
-    }
+      },
+      {
+        idempotency_key,
+      }
+    );
   } else {
       status.ref = `Unrecognized Stripe token type: "${stripeTokenType}"`;
-      return {status, ref: id, timestamp: created };
   }
+  
   status.ref = "ok",
+
   id = charge.id;
   created = charge.created;
 
-  return {status, ref: id, timestamp: created };
+  return {status, ref: id, timestamp: created }
 }
 
 router.post('/charge/:userid', upload.none(), async (req, res) => {
