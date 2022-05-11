@@ -109,7 +109,8 @@ export class OrderProcessor {
             this.queue.process(async (job) => {
                 try {
                     logger.info( `Processing job ${job.id}: ` + JSON.stringify(job.data));
-                    console.log ("processing job: " + JSON.stringify(job.data));
+                    
+		    console.log ("processing job: " + JSON.stringify(job.data));
                     
                     let marketplaceDB = new MarketplaceDB();
                     let datasetInfo = await marketplaceDB.getDataSet(job.data['dataset_id']);
