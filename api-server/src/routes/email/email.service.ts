@@ -8,7 +8,6 @@ const options = {
     token:  VAULT_CLIENT_TOKEN // optional client token; 
   };
 
-const vault = require("node-vault")(options);
 const nodemailer = require("nodemailer");
 const logger = new LogService().getLogger();
 
@@ -23,6 +22,7 @@ export class EmailService {
             
             let emailPass; 
             let result;
+            var vault = require("node-vault")(options);
             try {
                 result = await vault.read('secret/email');
             } catch (err)
